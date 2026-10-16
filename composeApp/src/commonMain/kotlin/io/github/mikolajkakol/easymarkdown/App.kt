@@ -30,8 +30,8 @@ fun App(
     document: OpenedDocument,
     onOpenFile: (() -> Unit)?,
     onShowSample: (() -> Unit)?,
+    darkTheme: Boolean = isSystemInDarkTheme(),
 ) {
-    val darkTheme = isSystemInDarkTheme()
     MaterialTheme(colorScheme = if (darkTheme) darkColorScheme() else lightColorScheme()) {
         DocumentScreen(document, darkTheme, onOpenFile, onShowSample)
     }
@@ -71,7 +71,7 @@ private fun DocumentScreen(
                         content = segment.text,
                         modifier = Modifier.fillMaxWidth(),
                     )
-                    is DocumentSegment.Mermaid -> MermaidDiagram(
+                    is DocumentSegment.Mermaid -> LocalMermaidRenderer.current.Render(
                         code = segment.code,
                         darkTheme = darkTheme,
                         modifier = Modifier.fillMaxWidth(),

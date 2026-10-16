@@ -1,0 +1,71 @@
+package io.github.mikolajkakol.easymarkdown
+
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.unit.dp
+import com.github.takahirom.roborazzi.captureRoboImage
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
+import org.robolectric.annotation.GraphicsMode
+
+/**
+ * Screenshot tests recorded with Roborazzi.
+ *
+ * Record: `./gradlew :composeApp:recordRoborazziDebug`, verify: `./gradlew :composeApp:verifyRoborazziDebug`.
+ * WebView does not render under Robolectric, so mermaid blocks are drawn as a placeholder showing their source.
+ */
+@RunWith(RobolectricTestRunner::class)
+@GraphicsMode(GraphicsMode.Mode.NATIVE)
+@Config(sdk = [35], qualifiers = "w411dp-h2200dp-xhdpi")
+class AppSnapshotTest {
+
+    @Test
+    fun sampleDocumentLight() = snapshot("sample_light") {
+        App(document = SampleDocument, onOpenFile = {}, onShowSample = {}, darkTheme = false)
+    }
+
+    @Test
+    fun sampleDocumentDark() = snapshot("sample_dark") {
+        App(document = SampleDocument, onOpenFile = {}, onShowSample = {}, darkTheme = true)
+    }
+
+    @Test
+    @Config(qualifiers = "w411dp-h891dp-xhdpi")
+    fun openingError() = snapshot("opening_error") {
+        App(
+            document = OpenedDocument(title = "Error", content = "# Cannot open file\n\n`Permission denied`"),
+            onOpenFile = {},
+            onShowSample = null,
+            darkTheme = false,
+        )
+    }
+
+    private fun snapshot(name: String, content: @Composable () -> Unit) {
+        captureRoboImage(filePath = "snapshots/$name.png") {
+            CompositionLocalProvider(LocalMermaidRenderer provides PlaceholderMermaidRenderer) {
+                content()
+            }
+        }
+    }
+}
+
+private val PlaceholderMermaidRenderer = MermaidRenderer { code, _, modifier ->
+    Column(
+        modifier = modifier
+            .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp))
+            .padding(12.dp),
+    ) {
+        Text("mermaid", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+        Text(code, fontFamily = FontFamily.Monospace, style = MaterialTheme.typography.bodySmall)
+    }
+}

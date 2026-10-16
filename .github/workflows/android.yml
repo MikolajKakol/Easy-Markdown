@@ -26,7 +26,12 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
 
       - name: Unit tests
+        if: hashFiles('composeApp/snapshots/*.png') == ''
         run: ./gradlew :composeApp:testDebugUnitTest --stacktrace
+
+      - name: Unit & snapshot tests
+        if: hashFiles('composeApp/snapshots/*.png') != ''
+        run: ./gradlew :composeApp:verifyRoborazziDebug --stacktrace
 
       - name: Build debug APK
         run: ./gradlew :composeApp:assembleDebug --stacktrace
@@ -43,4 +48,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: test-reports
-          path: composeApp/build/reports/tests/
+          path: |
+            composeApp/build/reports/tests/
+            composeApp/build/outputs/roborazzi/
