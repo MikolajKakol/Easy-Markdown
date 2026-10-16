@@ -82,3 +82,8 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 }
+
+dependencies {
+    // Registers the empty ComponentActivity used by createComposeRule() in snapshot tests.
+    debugImplementation(libs.compose.ui.test.manifest)
+}
