@@ -4,7 +4,10 @@ import android.annotation.SuppressLint
 import android.graphics.Color
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
+import android.webkit.ConsoleMessage
 import android.webkit.JavascriptInterface
+import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.activity.compose.BackHandler
@@ -43,6 +46,12 @@ actual fun MermaidDiagram(code: String, darkTheme: Boolean, zoomable: Boolean, m
                 settings.allowFileAccess = false
                 settings.allowContentAccess = false
                 addJavascriptInterface(bridge, "EasyMarkdown")
+                webChromeClient = object : WebChromeClient() {
+                    override fun onConsoleMessage(message: ConsoleMessage): Boolean {
+                        Log.d("EasyMarkdown", "${message.messageLevel()}: ${message.message()} (${message.sourceId()}:${message.lineNumber()})")
+                        return true
+                    }
+                }
                 webViewClient = object : WebViewClient() {
                     override fun onPageFinished(view: WebView, url: String?) {
                         bridge.attach(view)

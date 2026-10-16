@@ -54,6 +54,7 @@ print((x1 + x2) // 2, (y1 + y2) // 2)')
 echo "tapping diagram at $X,$Y"
 adb shell input tap "$X" "$Y"
 shot light_fullscreen 6
+echo "--- WebView console ---"; adb logcat -d -s EasyMarkdown:D | tail -40
 adb shell input keyevent KEYCODE_BACK
 
 # Switching theme recreates the activity; scroll again once diagrams re-rendered.
