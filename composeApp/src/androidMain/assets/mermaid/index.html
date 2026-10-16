@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        html, body { margin: 0; padding: 0; background: transparent; overflow: hidden; }
+        #diagram { display: flex; justify-content: center; }
+        #diagram svg { max-width: 100%; height: auto; }
+        #error { font-family: monospace; font-size: 13px; white-space: pre-wrap; color: #d32f2f; padding: 8px; }
+    </style>
+    <script src="mermaid.min.js"></script>
+</head>
+<body>
+<div id="diagram"></div>
+<div id="error"></div>
+<script>
+    function reportHeight() {
+        var h = Math.ceil(document.documentElement.getBoundingClientRect().height);
+        EasyMarkdown.onHeight(h);
+    }
+    async function render(code, dark) {
+        mermaid.initialize({ startOnLoad: false, theme: dark ? 'dark' : 'default', securityLevel: 'strict' });
+        var target = document.getElementById('diagram');
+        var error = document.getElementById('error');
+        try {
+            var result = await mermaid.render('mermaid-svg', code);
+            target.innerHTML = result.svg;
+            error.textContent = '';
+        } catch (e) {
+            target.innerHTML = '';
+            error.textContent = 'Mermaid error:\n' + (e && e.message ? e.message : e);
+        }
+        requestAnimationFrame(reportHeight);
+    }
+    window.addEventListener('resize', reportHeight);
+</script>
+</body>
+</html>
