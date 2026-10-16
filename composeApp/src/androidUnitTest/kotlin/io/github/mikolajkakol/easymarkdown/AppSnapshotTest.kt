@@ -40,12 +40,12 @@ class AppSnapshotTest {
 
     @Test
     fun sampleDocumentLight() = snapshot("sample_light", waitForText = "Text formatting") {
-        App(document = SampleDocument, onOpenFile = {}, onShowSample = {}, darkTheme = false)
+        App(document = SampleDocument, onOpenFile = {}, darkTheme = false)
     }
 
     @Test
     fun sampleDocumentDark() = snapshot("sample_dark", waitForText = "Text formatting") {
-        App(document = SampleDocument, onOpenFile = {}, onShowSample = {}, darkTheme = true)
+        App(document = SampleDocument, onOpenFile = {}, darkTheme = true)
     }
 
     @Test
@@ -54,7 +54,6 @@ class AppSnapshotTest {
         App(
             document = OpenedDocument(title = "Error", content = "# Cannot open file\n\n`Permission denied`"),
             onOpenFile = {},
-            onShowSample = null,
             darkTheme = false,
         )
     }

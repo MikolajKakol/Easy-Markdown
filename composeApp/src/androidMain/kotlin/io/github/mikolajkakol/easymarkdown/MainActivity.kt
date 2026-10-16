@@ -49,10 +49,6 @@ class MainActivity : ComponentActivity() {
             App(
                 document = document,
                 onOpenFile = { openFile.launch(arrayOf("text/markdown", "text/x-markdown", "text/plain", "application/octet-stream")) },
-                onShowSample = {
-                    source = null
-                    document = SampleDocument
-                },
             )
         }
     }

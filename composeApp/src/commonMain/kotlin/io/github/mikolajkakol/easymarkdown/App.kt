@@ -39,7 +39,6 @@ data class OpenedDocument(val title: String, val content: String)
 fun App(
     document: OpenedDocument,
     onOpenFile: (() -> Unit)?,
-    onShowSample: (() -> Unit)?,
     darkTheme: Boolean = isSystemInDarkTheme(),
 ) {
     MaterialTheme(colorScheme = if (darkTheme) darkColorScheme() else lightColorScheme()) {
@@ -48,7 +47,7 @@ fun App(
         var expandedIndex by rememberSaveable(document) { mutableStateOf<Int?>(null) }
         // Full screen views are drawn over the document so its scroll position and rendered diagrams are kept.
         Box(Modifier.fillMaxSize()) {
-            DocumentScreen(document, segments, darkTheme, onOpenFile, onShowSample, onExpand = { expandedIndex = it })
+            DocumentScreen(document, segments, darkTheme, onOpenFile, onExpand = { expandedIndex = it })
             val close = { expandedIndex = null }
             when (val expanded = expandedIndex?.let(segments::getOrNull)) {
                 is DocumentSegment.Mermaid -> DiagramScreen(expanded.code, darkTheme, onClose = close)
@@ -66,7 +65,6 @@ private fun DocumentScreen(
     segments: List<DocumentSegment>,
     darkTheme: Boolean,
     onOpenFile: (() -> Unit)?,
-    onShowSample: (() -> Unit)?,
     onExpand: (index: Int) -> Unit,
 ) {
     Scaffold(
@@ -74,7 +72,6 @@ private fun DocumentScreen(
             TopAppBar(
                 title = { Text(document.title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
                 actions = {
-                    if (onShowSample != null) TextButton(onClick = onShowSample) { Text("Sample") }
                     if (onOpenFile != null) TextButton(onClick = onOpenFile) { Text("Open") }
                 },
             )
