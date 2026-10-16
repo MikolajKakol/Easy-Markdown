@@ -13,6 +13,20 @@ scroll() { close_dialogs; adb shell input swipe 540 1800 540 $((1800 - $1)) 600;
 
 adb install -r "$APK"
 
+# Taps the first or last on-screen element with the given accessibility label.
+tap_label() {
+    close_dialogs
+    adb shell uiautomator dump /sdcard/ui.xml > /dev/null
+    read -r X Y < <(adb exec-out cat /sdcard/ui.xml | python3 -c '
+import re, sys
+label, which = sys.argv[1], sys.argv[2]
+nodes = re.findall(r"content-desc=\"" + re.escape(label) + r"\"[^>]*bounds=\"\[(\d+),(\d+)\]\[(\d+),(\d+)\]\"", sys.stdin.read())
+x1, y1, x2, y2 = map(int, nodes[0 if which == "first" else -1])
+print((x1 + x2) // 2, (y1 + y2) // 2)' "$1" "$2")
+    echo "tapping '$1' at $X,$Y"
+    adb shell input tap "$X" "$Y"
+}
+
 # Verify the app is offered for markdown files, including ones reported with a generic MIME type.
 check_handler() {
     if adb shell cmd package query-activities --brief -a android.intent.action.VIEW -d "$1" -t "$2" | grep -q "$PKG/"; then
@@ -41,18 +55,15 @@ adb shell am broadcast -a com.android.systemui.demo -e command battery -e level 
 adb shell cmd uimode night no
 adb shell am start -W -n "$PKG/io.github.mikolajkakol.easymarkdown.MainActivity"
 shot light_top 10
+tap_label "Markdown table" last
+shot light_table 4
+adb shell input keyevent KEYCODE_BACK
+sleep 2
 scroll 1300
+scroll 700
 shot light_diagrams
 # Tap the first diagram on screen (found by its accessibility label) to open it full screen.
-close_dialogs
-adb shell uiautomator dump /sdcard/ui.xml > /dev/null
-read -r X Y < <(adb exec-out cat /sdcard/ui.xml | python3 -c '
-import re, sys
-m = re.search(r"content-desc=\"Mermaid diagram\"[^>]*bounds=\"\[(\d+),(\d+)\]\[(\d+),(\d+)\]\"", sys.stdin.read())
-x1, y1, x2, y2 = map(int, m.groups())
-print((x1 + x2) // 2, (y1 + y2) // 2)')
-echo "tapping diagram at $X,$Y"
-adb shell input tap "$X" "$Y"
+tap_label "Mermaid diagram" first
 shot light_fullscreen 6
 echo "--- WebView console ---"; adb logcat -d -s EasyMarkdown:D | tail -40
 adb shell input keyevent KEYCODE_BACK
@@ -66,6 +77,7 @@ sleep 8
 close_dialogs
 scroll 1300
 scroll 900
+scroll 700
 shot dark_diagrams
 
 adb shell cmd uimode night no

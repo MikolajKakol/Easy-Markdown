@@ -67,6 +67,15 @@ class AppSnapshotTest {
         }
     }
 
+    @Test
+    @Config(qualifiers = "w411dp-h891dp-xhdpi")
+    fun tableFullScreen() = snapshot("table_fullscreen", waitForText = "Compose Multiplatform") {
+        MaterialTheme {
+            val table = splitDocument(SampleDocument.content).filterIsInstance<DocumentSegment.Table>().last()
+            TableScreen(table, onClose = {})
+        }
+    }
+
     /** Markdown is parsed asynchronously, so wait for [waitForText] before capturing. */
     private fun snapshot(name: String, waitForText: String, content: @Composable () -> Unit) {
         composeRule.setContent {

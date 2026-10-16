@@ -1,6 +1,7 @@
 package io.github.mikolajkakol.easymarkdown
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
@@ -42,12 +43,17 @@ fun App(
     darkTheme: Boolean = isSystemInDarkTheme(),
 ) {
     MaterialTheme(colorScheme = if (darkTheme) darkColorScheme() else lightColorScheme()) {
-        var openedDiagram by rememberSaveable(document) { mutableStateOf<String?>(null) }
-        // The diagram screen is drawn over the document so its scroll position and rendered diagrams are kept.
+        val segments = remember(document.content) { splitDocument(document.content) }
+        // Index of the diagram or table shown full screen.
+        var expandedIndex by rememberSaveable(document) { mutableStateOf<Int?>(null) }
+        // Full screen views are drawn over the document so its scroll position and rendered diagrams are kept.
         Box(Modifier.fillMaxSize()) {
-            DocumentScreen(document, darkTheme, onOpenFile, onShowSample, onOpenDiagram = { openedDiagram = it })
-            openedDiagram?.let { code ->
-                DiagramScreen(code = code, darkTheme = darkTheme, onClose = { openedDiagram = null })
+            DocumentScreen(document, segments, darkTheme, onOpenFile, onShowSample, onExpand = { expandedIndex = it })
+            val close = { expandedIndex = null }
+            when (val expanded = expandedIndex?.let(segments::getOrNull)) {
+                is DocumentSegment.Mermaid -> DiagramScreen(expanded.code, darkTheme, onClose = close)
+                is DocumentSegment.Table -> TableScreen(expanded, onClose = close)
+                else -> Unit
             }
         }
     }
@@ -57,10 +63,11 @@ fun App(
 @Composable
 private fun DocumentScreen(
     document: OpenedDocument,
+    segments: List<DocumentSegment>,
     darkTheme: Boolean,
     onOpenFile: (() -> Unit)?,
     onShowSample: (() -> Unit)?,
-    onOpenDiagram: (String) -> Unit,
+    onExpand: (index: Int) -> Unit,
 ) {
     Scaffold(
         topBar = {
@@ -73,7 +80,6 @@ private fun DocumentScreen(
             )
         },
     ) { padding ->
-        val segments = remember(document.content) { splitDocument(document.content) }
         val typography = with(MaterialTheme.typography) {
             markdownTypography(
                 h1 = headlineLarge,
@@ -92,7 +98,7 @@ private fun DocumentScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            segments.forEach { segment ->
+            segments.forEachIndexed { index, segment ->
                 when (segment) {
                     is DocumentSegment.Markdown -> Markdown(
                         content = segment.text,
@@ -111,7 +117,16 @@ private fun DocumentScreen(
                             Modifier
                                 .matchParentSize()
                                 .semantics { contentDescription = "Mermaid diagram" }
-                                .clickable(onClickLabel = "Open diagram") { onOpenDiagram(segment.code) },
+                                .clickable(onClickLabel = "Open diagram") { onExpand(index) },
+                        )
+                    }
+                    is DocumentSegment.Table -> Box(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())) {
+                        MarkdownTable(
+                            table = segment,
+                            maxColumnWidth = 260.dp,
+                            modifier = Modifier
+                                .semantics { contentDescription = "Markdown table" }
+                                .clickable(onClickLabel = "Open table") { onExpand(index) },
                         )
                     }
                 }

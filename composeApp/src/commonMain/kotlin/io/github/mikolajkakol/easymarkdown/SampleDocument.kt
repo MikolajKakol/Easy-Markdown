@@ -7,6 +7,7 @@ val SampleDocument = OpenedDocument(
 
 A simple viewer for **Markdown** files with *Mermaid* diagrams.
 Tap **Open** to view a `.md` file from your device.
+Tap a table or a diagram to open it full screen.
 
 ## Text formatting
 
@@ -22,6 +23,14 @@ Tap **Open** to view a `.md` file from your device.
 |----------|--------|
 | Markdown | ✅     |
 | Mermaid  | ✅     |
+
+Wide tables scroll sideways and wrap long cells:
+
+| Tool | Purpose | Notes | Platforms |
+|------|:-------:|-------|-----------|
+| **Compose Multiplatform** | Shared UI | Declarative UI framework from JetBrains, sharing one codebase across platforms. | Android, iOS, Desktop, Web |
+| `mermaid.js` | Diagrams | Renders flowcharts, sequence diagrams, pie charts and more from text.<br>Bundled, works offline. | Any WebView |
+| [Roborazzi](https://github.com/takahirom/roborazzi) | Snapshot tests | Captures Compose UI screenshots on the JVM with Robolectric. | JVM |
 
 ```kotlin
 fun main() = println("Hello, Markdown!")

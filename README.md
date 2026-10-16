@@ -10,6 +10,7 @@ Przeglądarka plików **Markdown** z obsługą diagramów **Mermaid**, napisana 
 </p>
 <p align="center">
   <img src="docs/screenshots/light_fullscreen.png" width="260" alt="Diagram na pełnym ekranie z pinch-to-zoom">
+  <img src="docs/screenshots/light_table.png" width="260" alt="Tabela na pełnym ekranie">
 </p>
 
 ## Funkcje
@@ -18,6 +19,8 @@ Przeglądarka plików **Markdown** z obsługą diagramów **Mermaid**, napisana 
   [multiplatform-markdown-renderer](https://github.com/mikepenz/multiplatform-markdown-renderer),
 - diagramy Mermaid z bloków ```` ```mermaid ```` – renderowane przez dołączony lokalnie
   [mermaid.js](https://mermaid.js.org) (działa offline), z jasnym/ciemnym motywem,
+- tabele przewijane w poziomie, z ograniczoną szerokością kolumn (długi tekst się zawija) i formatowaniem
+  w komórkach; tapnięcie otwiera tabelę na pełnym ekranie,
 - tapnięcie diagramu otwiera go na pełnym ekranie z pinch-to-zoom i przesuwaniem,
 - otwieranie plików przez systemowy wybór pliku (**Open**), „Otwórz za pomocą” oraz
   **Udostępnij**; aplikacja rejestruje się jako obsługująca pliki `.md`, `.markdown`, `.mdown`, `.mkd`
