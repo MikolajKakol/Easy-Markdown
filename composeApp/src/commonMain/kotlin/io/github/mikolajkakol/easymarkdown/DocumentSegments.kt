@@ -1,9 +1,12 @@
 package io.github.mikolajkakol.easymarkdown
 
-/** A piece of a markdown document: plain markdown, a mermaid diagram or a table. */
+/** A piece of a markdown document: plain markdown, a mermaid diagram, a code block or a table. */
 sealed interface DocumentSegment {
     data class Markdown(val text: String) : DocumentSegment
     data class Mermaid(val code: String) : DocumentSegment
+
+    /** A fenced code block (other than mermaid); shown unwrapped so ASCII art keeps its alignment. */
+    data class Code(val language: String, val code: String) : DocumentSegment
 
     /** A GFM table. Every row has exactly as many cells as [header]; cells hold raw inline markdown. */
     data class Table(
@@ -18,9 +21,9 @@ enum class ColumnAlignment { Start, Center, End }
 private val fenceOpen = Regex("""^ {0,3}(`{3,}|~{3,})(.*)$""")
 
 /**
- * Splits markdown into segments, extracting fenced code blocks whose info string is `mermaid`
- * (e.g. ```` ```mermaid ````) and top-level GFM tables. Other fenced code blocks stay part of the markdown,
- * and anything inside them is ignored, so a mermaid example or a table inside a code block is shown as code.
+ * Splits markdown into segments: fenced code blocks (```` ```mermaid ```` ones become diagrams) and
+ * top-level GFM tables are extracted, everything else stays markdown. Anything inside a fence is code,
+ * so a mermaid example or a table inside a longer fence is shown as code.
  */
 fun splitDocument(markdown: String): List<DocumentSegment> {
     val segments = mutableListOf<DocumentSegment>()
@@ -59,12 +62,9 @@ fun splitDocument(markdown: String): List<DocumentSegment> {
         val closeIndex = (i + 1 until lines.size).firstOrNull { isClosingFence(lines[it], fence) }
         val end = closeIndex ?: lines.size
         val language = info.substringBefore(' ').lowercase()
-        if (language == "mermaid") {
-            flushMarkdown()
-            segments += DocumentSegment.Mermaid(lines.subList(i + 1, end).joinToString("\n"))
-        } else {
-            for (j in i..minOf(end, lines.size - 1)) markdownBuffer.append(lines[j]).append('\n')
-        }
+        val body = lines.subList(i + 1, end).joinToString("\n")
+        flushMarkdown()
+        segments += if (language == "mermaid") DocumentSegment.Mermaid(body) else DocumentSegment.Code(language, body)
         i = end + 1
     }
     flushMarkdown()

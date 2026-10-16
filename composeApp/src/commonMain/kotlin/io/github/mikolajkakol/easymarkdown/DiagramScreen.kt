@@ -46,6 +46,23 @@ fun TableScreen(table: DocumentSegment.Table, onClose: () -> Unit, modifier: Mod
     }
 }
 
+/** Full screen view of a code block, scrollable in both directions. */
+@Composable
+fun CodeScreen(code: DocumentSegment.Code, onClose: () -> Unit, modifier: Modifier = Modifier) {
+    DetailScreen(title = code.language.ifEmpty { "Code" }, onClose = onClose, modifier = modifier) { padding ->
+        Box(
+            Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .verticalScroll(rememberScrollState())
+                .horizontalScroll(rememberScrollState())
+                .padding(16.dp),
+        ) {
+            CodeBlock(code)
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun DetailScreen(

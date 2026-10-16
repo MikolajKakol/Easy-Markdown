@@ -1,5 +1,6 @@
 package io.github.mikolajkakol.easymarkdown
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -26,6 +28,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
@@ -52,6 +55,7 @@ fun App(
             when (val expanded = expandedIndex?.let(segments::getOrNull)) {
                 is DocumentSegment.Mermaid -> DiagramScreen(expanded.code, darkTheme, onClose = close)
                 is DocumentSegment.Table -> TableScreen(expanded, onClose = close)
+                is DocumentSegment.Code -> CodeScreen(expanded, onClose = close)
                 else -> Unit
             }
         }
@@ -116,6 +120,16 @@ private fun DocumentScreen(
                                 .semantics { contentDescription = "Mermaid diagram" }
                                 .clickable(onClickLabel = "Open diagram") { onExpand(index) },
                         )
+                    }
+                    is DocumentSegment.Code -> Box(
+                        Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                            .semantics { contentDescription = "Code block" }
+                            .clickable(onClickLabel = "Open code") { onExpand(index) },
+                    ) {
+                        CodeBlock(segment, Modifier.horizontalScroll(rememberScrollState()).padding(12.dp))
                     }
                     is DocumentSegment.Table -> Box(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())) {
                         MarkdownTable(

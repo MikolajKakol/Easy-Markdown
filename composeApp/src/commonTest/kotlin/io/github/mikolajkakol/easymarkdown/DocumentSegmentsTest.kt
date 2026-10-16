@@ -27,15 +27,23 @@ class DocumentSegmentsTest {
     }
 
     @Test
-    fun keepsOtherCodeBlocksInMarkdown() {
-        val doc = "```kotlin\nval x = 1\n```"
-        assertEquals(listOf(DocumentSegment.Markdown(doc)), splitDocument(doc))
+    fun extractsOtherCodeBlocks() {
+        assertEquals(
+            listOf(
+                DocumentSegment.Markdown("Text"),
+                DocumentSegment.Code("kotlin", "val x = 1\n\n  indented"),
+                DocumentSegment.Code("", "┌─┐\n└─┘"),
+            ),
+            splitDocument("Text\n```kotlin\nval x = 1\n\n  indented\n```\n```\n┌─┐\n└─┘\n```"),
+        )
     }
 
     @Test
     fun ignoresMermaidNestedInLongerFence() {
-        val doc = "````md\n```mermaid\ngraph TD\n```\n````"
-        assertEquals(listOf(DocumentSegment.Markdown(doc)), splitDocument(doc))
+        assertEquals(
+            listOf(DocumentSegment.Code("md", "```mermaid\ngraph TD\n```")),
+            splitDocument("````md\n```mermaid\ngraph TD\n```\n````"),
+        )
     }
 
     @Test
@@ -86,8 +94,15 @@ class DocumentSegmentsTest {
     }
 
     @Test
-    fun tableInsideCodeFenceStaysMarkdown() {
-        val doc = "```\n| a | b |\n|---|---|\n```"
-        assertEquals(listOf(DocumentSegment.Markdown(doc)), splitDocument(doc))
+    fun tableInsideCodeFenceStaysCode() {
+        assertEquals(
+            listOf(DocumentSegment.Code("", "| a | b |\n|---|---|")),
+            splitDocument("```\n| a | b |\n|---|---|\n```"),
+        )
+    }
+
+    @Test
+    fun expandsTabsToTabStops() {
+        assertEquals("a   b\n    c\nab  d", expandTabs("a\tb\n\tc\nab\td"))
     }
 }

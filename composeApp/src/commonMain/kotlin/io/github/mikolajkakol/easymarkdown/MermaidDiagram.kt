@@ -3,6 +3,7 @@ package io.github.mikolajkakol.easymarkdown
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontFamily
 
 /**
  * Renders a mermaid diagram from its source code.
@@ -22,6 +23,10 @@ fun interface MermaidRenderer {
 val LocalMermaidRenderer = staticCompositionLocalOf {
     MermaidRenderer { code, darkTheme, zoomable, modifier -> MermaidDiagram(code, darkTheme, zoomable, modifier) }
 }
+
+/** Monospace font with full box-drawing coverage, so ASCII/Unicode diagrams line up. */
+@Composable
+expect fun codeFontFamily(): FontFamily
 
 /** Handles the system back gesture while [enabled]. */
 @Composable

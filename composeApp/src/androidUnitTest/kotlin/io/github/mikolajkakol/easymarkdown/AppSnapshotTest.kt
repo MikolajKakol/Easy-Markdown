@@ -75,6 +75,15 @@ class AppSnapshotTest {
         }
     }
 
+    @Test
+    @Config(qualifiers = "w411dp-h891dp-xhdpi")
+    fun codeFullScreen() = snapshot("code_fullscreen", waitForText = "Easy Markdown") {
+        MaterialTheme {
+            val code = splitDocument(SampleDocument.content).filterIsInstance<DocumentSegment.Code>().last()
+            CodeScreen(code, onClose = {})
+        }
+    }
+
     /** Markdown is parsed asynchronously, so wait for [waitForText] before capturing. */
     private fun snapshot(name: String, waitForText: String, content: @Composable () -> Unit) {
         composeRule.setContent {

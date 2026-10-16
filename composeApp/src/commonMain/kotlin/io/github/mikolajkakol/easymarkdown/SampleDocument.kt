@@ -7,7 +7,7 @@ val SampleDocument = OpenedDocument(
 
 A simple viewer for **Markdown** files with *Mermaid* diagrams.
 Tap **Open** to view a `.md` file from your device.
-Tap a table or a diagram to open it full screen.
+Tap a table, a diagram or a code block to open it full screen.
 
 ## Text formatting
 
@@ -64,6 +64,23 @@ pie title Time spent
     "Writing" : 45
     "Diagrams" : 30
     "Reviewing" : 25
+```
+
+## ASCII diagrams
+
+Code blocks don't wrap, so ASCII art keeps its shape – scroll sideways:
+
+```
+┌──────────────┐     ┌────────────────────┐     ┌──────────────────┐
+│  notes.md    │ ──► │   Easy Markdown    │ ──► │  Rendered view   │
+│  (any app)   │     │  split & render    │     │  tap to zoom     │
+└──────────────┘     └─────────┬──────────┘     └──────────────────┘
+                               │
+                    ┌──────────┴──────────┐
+                    ▼                     ▼
+             ┌─────────────┐       ┌─────────────┐
+             │  Markdown   │       │   Mermaid   │
+             └─────────────┘       └─────────────┘
 ```
 """.trimIndent(),
 )

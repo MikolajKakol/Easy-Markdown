@@ -16,7 +16,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLinkStyles
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
@@ -35,7 +34,7 @@ private val TableShape = RoundedCornerShape(8.dp)
 fun MarkdownTable(table: DocumentSegment.Table, maxColumnWidth: Dp, modifier: Modifier = Modifier) {
     val colors = MaterialTheme.colorScheme
     val textStyle = MaterialTheme.typography.bodyMedium
-    val codeStyle = SpanStyle(fontFamily = FontFamily.Monospace, background = colors.surfaceVariant)
+    val codeStyle = SpanStyle(fontFamily = codeFontFamily(), background = colors.surfaceVariant)
     val linkStyles = TextLinkStyles(SpanStyle(color = colors.primary, textDecoration = TextDecoration.Underline))
     val lineColor = colors.outlineVariant
     val rows = remember(table) { listOf(table.header) + table.rows }

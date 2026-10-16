@@ -18,6 +18,8 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import org.json.JSONObject
@@ -103,3 +105,8 @@ private class MermaidWebBridge(private val zoomable: Boolean, private val onHeig
 actual fun PlatformBackHandler(enabled: Boolean, onBack: () -> Unit) {
     BackHandler(enabled = enabled, onBack = onBack)
 }
+
+private val JetBrainsMono = FontFamily(Font(R.font.jetbrains_mono_regular))
+
+@Composable
+actual fun codeFontFamily(): FontFamily = JetBrainsMono

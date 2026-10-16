@@ -11,6 +11,7 @@ Przeglądarka plików **Markdown** z obsługą diagramów **Mermaid**, napisana 
 <p align="center">
   <img src="docs/screenshots/light_fullscreen.png" width="260" alt="Diagram na pełnym ekranie z pinch-to-zoom">
   <img src="docs/screenshots/light_table.png" width="260" alt="Tabela na pełnym ekranie">
+  <img src="docs/screenshots/dark_code.png" width="260" alt="Diagram ASCII w bloku kodu">
 </p>
 
 ## Funkcje
@@ -21,6 +22,8 @@ Przeglądarka plików **Markdown** z obsługą diagramów **Mermaid**, napisana 
   [mermaid.js](https://mermaid.js.org) (działa offline), z jasnym/ciemnym motywem,
 - tabele przewijane w poziomie, z ograniczoną szerokością kolumn (długi tekst się zawija) i formatowaniem
   w komórkach; tapnięcie otwiera tabelę na pełnym ekranie,
+- bloki kodu bez zawijania wierszy, z przewijaniem w poziomie i fontem JetBrains Mono (pełny zestaw znaków
+  ramek `┌─┐│└┘` i strzałek), więc diagramy ASCII się nie rozjeżdżają; tapnięcie otwiera blok na pełnym ekranie,
 - tapnięcie diagramu otwiera go na pełnym ekranie z pinch-to-zoom i przesuwaniem,
 - otwieranie plików przez systemowy wybór pliku (**Open**), „Otwórz za pomocą” oraz
   **Udostępnij**; aplikacja rejestruje się jako obsługująca pliki `.md`, `.markdown`, `.mdown`, `.mkd`
@@ -71,6 +74,8 @@ na zrzutach z emulatora powyżej.
 
 Debug APK podpisywane jest kluczem `composeApp/debug.keystore` (hasło `android`), więc kolejne
 buildy z CI można instalować bez odinstalowywania poprzedniej wersji.
+
+Licencje dołączonych zasobów (mermaid.js, JetBrains Mono): [`third_party/`](third_party/README.md).
 
 Aktualizacja mermaid.js: podmień `composeApp/src/androidMain/assets/mermaid/mermaid.min.js`
 (np. `npm pack mermaid` → `package/dist/mermaid.min.js`).

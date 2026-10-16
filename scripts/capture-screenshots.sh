@@ -79,5 +79,12 @@ scroll 1300
 scroll 900
 scroll 700
 shot dark_diagrams
+# Scroll to the ASCII diagram at the end and open it full screen.
+scroll 1500
+scroll 1500
+scroll 1500
+tap_label "Code block" last
+shot dark_code 4
+adb shell input keyevent KEYCODE_BACK
 
 adb shell cmd uimode night no
