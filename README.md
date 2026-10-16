@@ -20,7 +20,8 @@ Przeglądarka plików **Markdown** z obsługą diagramów **Mermaid**, napisana 
   [mermaid.js](https://mermaid.js.org) (działa offline), z jasnym/ciemnym motywem,
 - tapnięcie diagramu otwiera go na pełnym ekranie z pinch-to-zoom i przesuwaniem,
 - otwieranie plików przez systemowy wybór pliku (**Open**), „Otwórz za pomocą” oraz
-  **Udostępnij** – aplikacja przyjmuje udostępniane pliki `.md`/tekstowe oraz sam tekst (renderowany jako Markdown).
+  **Udostępnij**; aplikacja rejestruje się jako obsługująca pliki `.md`, `.markdown`, `.mdown`, `.mkd`
+  (także gdy menedżer plików podaje ogólny typ MIME), więc można ją ustawić jako domyślną. Przyjmuje udostępniane pliki `.md`/tekstowe oraz sam tekst (renderowany jako Markdown).
 
 ## Struktura
 

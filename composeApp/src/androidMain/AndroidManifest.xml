@@ -15,7 +15,7 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-            <!-- "Open with" for markdown files -->
+            <!-- "Open with" / default app for markdown files, matched by MIME type -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -24,7 +24,38 @@
                 <data android:scheme="file" />
                 <data android:mimeType="text/markdown" />
                 <data android:mimeType="text/x-markdown" />
+                <data android:mimeType="text/x-web-markdown" />
+                <data android:mimeType="text/md" />
                 <data android:mimeType="text/plain" />
+            </intent-filter>
+            <!--
+                Same, matched by file extension: many file managers report .md files as
+                application/octet-stream or another generic type.
+            -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:host="*" />
+                <data android:mimeType="*/*" />
+                <data android:pathPattern=".*\\.md" />
+                <data android:pathPattern=".*\\..*\\.md" />
+                <data android:pathPattern=".*\\..*\\..*\\.md" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\.md" />
+                <data android:pathPattern=".*\\.markdown" />
+                <data android:pathPattern=".*\\..*\\.markdown" />
+                <data android:pathPattern=".*\\..*\\..*\\.markdown" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\.markdown" />
+                <data android:pathPattern=".*\\.mdown" />
+                <data android:pathPattern=".*\\..*\\.mdown" />
+                <data android:pathPattern=".*\\..*\\..*\\.mdown" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\.mdown" />
+                <data android:pathPattern=".*\\.mkd" />
+                <data android:pathPattern=".*\\..*\\.mkd" />
+                <data android:pathPattern=".*\\..*\\..*\\.mkd" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\.mkd" />
             </intent-filter>
             <!-- Share sheet: markdown/text files (EXTRA_STREAM) or plain shared text (EXTRA_TEXT) -->
             <intent-filter>

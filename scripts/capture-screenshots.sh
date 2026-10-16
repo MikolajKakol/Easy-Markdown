@@ -12,6 +12,19 @@ scroll() { adb shell input swipe 540 1800 540 $((1800 - $1)) 600; }
 
 adb install -r "$APK"
 
+# Verify the app is offered for markdown files, including ones reported with a generic MIME type.
+check_handler() {
+    if adb shell cmd package query-activities --brief -a android.intent.action.VIEW -d "$1" -t "$2" | grep -q "$PKG/"; then
+        echo "OK: handles $2 $1"
+    else
+        echo "FAIL: not offered for $2 $1"; exit 1
+    fi
+}
+check_handler "content://com.android.externalstorage.documents/document/primary%3ADownload%2Fnotes.md" "text/markdown"
+check_handler "content://com.android.externalstorage.documents/document/primary%3ADownload%2Fnotes.md" "application/octet-stream"
+check_handler "content://com.example.files/root/my.notes.v2.markdown" "application/octet-stream"
+check_handler "file:///sdcard/Download/readme.md" "text/x-markdown"
+
 # Clean status bar.
 adb shell settings put global sysui_demo_allowed 1
 adb shell am broadcast -a com.android.systemui.demo -e command enter
