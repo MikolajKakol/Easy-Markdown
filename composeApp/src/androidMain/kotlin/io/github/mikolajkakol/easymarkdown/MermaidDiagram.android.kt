@@ -29,7 +29,7 @@ private const val MIN_HEIGHT_DP = 48
 @Composable
 actual fun MermaidDiagram(code: String, darkTheme: Boolean, zoomable: Boolean, modifier: Modifier) {
     var heightDp by remember { mutableIntStateOf(MIN_HEIGHT_DP) }
-    val bridge = remember { MermaidWebBridge(onHeight = { heightDp = maxOf(it, MIN_HEIGHT_DP) }) }
+    val bridge = remember { MermaidWebBridge(zoomable, onHeight = { heightDp = maxOf(it, MIN_HEIGHT_DP) }) }
     bridge.update(code, darkTheme)
 
     AndroidView(
@@ -58,7 +58,7 @@ actual fun MermaidDiagram(code: String, darkTheme: Boolean, zoomable: Boolean, m
                     }
                 }
                 // Assets are still readable through file:///android_asset even with allowFileAccess = false.
-                loadUrl(ASSET_BASE_URL + if (zoomable) "index.html#zoom" else "index.html")
+                loadUrl(ASSET_BASE_URL + "index.html")
             }
         },
         onRelease = { it.destroy() },
@@ -66,7 +66,7 @@ actual fun MermaidDiagram(code: String, darkTheme: Boolean, zoomable: Boolean, m
 }
 
 /** Bridges a WebView page with Compose: pushes diagram source in, gets rendered height back. */
-private class MermaidWebBridge(private val onHeight: (Int) -> Unit) {
+private class MermaidWebBridge(private val zoomable: Boolean, private val onHeight: (Int) -> Unit) {
     private val mainHandler = Handler(Looper.getMainLooper())
     private var webView: WebView? = null
     private var code: String = ""
@@ -90,7 +90,7 @@ private class MermaidWebBridge(private val onHeight: (Int) -> Unit) {
         val request = code to darkTheme
         if (rendered == request) return
         rendered = request
-        view.evaluateJavascript("render(${JSONObject.quote(code)}, $darkTheme);", null)
+        view.evaluateJavascript("render(${JSONObject.quote(code)}, $darkTheme, $zoomable);", null)
     }
 
     @JavascriptInterface

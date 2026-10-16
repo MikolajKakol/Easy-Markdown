@@ -2,20 +2,13 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <script>
-        // "#zoom" = full screen mode: diagram fits the screen and the user can pinch to zoom.
-        var zoomMode = location.hash === '#zoom';
-        document.write('<meta name="viewport" content="width=device-width, initial-scale=1, ' +
-            (zoomMode ? 'minimum-scale=1, maximum-scale=10, user-scalable=yes' : 'user-scalable=no') + '">');
-        if (zoomMode) document.documentElement.className = 'zoom';
-    </script>
+    <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
     <style>
         html, body { margin: 0; padding: 0; background: transparent; overflow: hidden; }
         #diagram { display: flex; justify-content: center; }
         #diagram svg { max-width: 100%; height: auto; }
-        html.zoom, html.zoom body { overflow: visible; }
-        html.zoom #diagram { min-height: 100vh; align-items: center; padding: 8px; box-sizing: border-box; }
-        html.zoom #diagram svg { max-height: calc(100vh - 16px); }
+        html.zoom, html.zoom body { height: 100%; overflow: visible; }
+        html.zoom #diagram { height: 100%; align-items: center; }
         #error { font-family: monospace; font-size: 13px; white-space: pre-wrap; color: #d32f2f; padding: 8px; }
     </style>
     <script src="mermaid.min.js"></script>
@@ -24,11 +17,35 @@
 <div id="diagram"></div>
 <div id="error"></div>
 <script>
+    var zoomMode = false;
+
     function reportHeight() {
         var h = Math.ceil(document.documentElement.getBoundingClientRect().height);
         EasyMarkdown.onHeight(h);
     }
-    async function render(code, dark) {
+
+    // Full screen mode: size the diagram to fit the screen; the WebView's own zoom handles pinch-to-zoom.
+    function fitToScreen() {
+        var svg = document.querySelector('#diagram svg');
+        if (!svg || !svg.viewBox || !svg.viewBox.baseVal) return;
+        var box = svg.viewBox.baseVal;
+        var w = window.innerWidth - 16, h = window.innerHeight - 16;
+        if (box.width <= 0 || box.height <= 0 || w <= 0 || h <= 0) return;
+        var scale = Math.min(w / box.width, h / box.height);
+        svg.style.maxWidth = 'none';
+        svg.style.width = (box.width * scale) + 'px';
+        svg.style.height = (box.height * scale) + 'px';
+        console.log('fit ' + Math.round(box.width) + 'x' + Math.round(box.height) +
+            ' into ' + window.innerWidth + 'x' + window.innerHeight + ' scale ' + scale.toFixed(2));
+    }
+
+    async function render(code, dark, zoom) {
+        zoomMode = zoom;
+        if (zoom) {
+            document.getElementById('viewport').setAttribute('content',
+                'width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=10, user-scalable=yes');
+            document.documentElement.classList.add('zoom');
+        }
         mermaid.initialize({ startOnLoad: false, theme: dark ? 'dark' : 'default', securityLevel: 'strict' });
         var target = document.getElementById('diagram');
         var error = document.getElementById('error');
@@ -39,10 +56,19 @@
         } catch (e) {
             target.innerHTML = '';
             error.textContent = 'Mermaid error:\n' + (e && e.message ? e.message : e);
+            console.error('render failed: ' + e);
+        }
+        if (zoom) {
+            console.log('rendered full screen, viewport ' + window.innerWidth + 'x' + window.innerHeight);
+            fitToScreen();
         }
         requestAnimationFrame(reportHeight);
     }
-    window.addEventListener('resize', reportHeight);
+
+    window.addEventListener('resize', function () {
+        if (zoomMode) fitToScreen();
+        reportHeight();
+    });
 </script>
 </body>
 </html>
