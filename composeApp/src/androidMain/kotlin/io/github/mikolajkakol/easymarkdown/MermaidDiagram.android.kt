@@ -25,8 +25,8 @@ private const val MIN_HEIGHT_DP = 48
 @Composable
 actual fun MermaidDiagram(code: String, darkTheme: Boolean, modifier: Modifier) {
     var heightDp by remember { mutableIntStateOf(MIN_HEIGHT_DP) }
-    val renderer = remember { MermaidRenderer(onHeight = { heightDp = maxOf(it, MIN_HEIGHT_DP) }) }
-    renderer.update(code, darkTheme)
+    val bridge = remember { MermaidWebBridge(onHeight = { heightDp = maxOf(it, MIN_HEIGHT_DP) }) }
+    bridge.update(code, darkTheme)
 
     AndroidView(
         modifier = modifier.height(heightDp.dp),
@@ -38,10 +38,10 @@ actual fun MermaidDiagram(code: String, darkTheme: Boolean, modifier: Modifier) 
                 settings.javaScriptEnabled = true
                 settings.allowFileAccess = false
                 settings.allowContentAccess = false
-                addJavascriptInterface(renderer, "EasyMarkdown")
+                addJavascriptInterface(bridge, "EasyMarkdown")
                 webViewClient = object : WebViewClient() {
                     override fun onPageFinished(view: WebView, url: String?) {
-                        renderer.attach(view)
+                        bridge.attach(view)
                     }
                 }
                 // Assets are still readable through file:///android_asset even with allowFileAccess = false.
@@ -53,7 +53,7 @@ actual fun MermaidDiagram(code: String, darkTheme: Boolean, modifier: Modifier) 
 }
 
 /** Bridges a WebView page with Compose: pushes diagram source in, gets rendered height back. */
-private class MermaidRenderer(private val onHeight: (Int) -> Unit) {
+private class MermaidWebBridge(private val onHeight: (Int) -> Unit) {
     private val mainHandler = Handler(Looper.getMainLooper())
     private var webView: WebView? = null
     private var code: String = ""
