@@ -25,6 +25,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.mikepenz.markdown.m3.Markdown
@@ -108,6 +110,7 @@ private fun DocumentScreen(
                         Box(
                             Modifier
                                 .matchParentSize()
+                                .semantics { contentDescription = "Mermaid diagram" }
                                 .clickable(onClickLabel = "Open diagram") { onOpenDiagram(segment.code) },
                         )
                     }

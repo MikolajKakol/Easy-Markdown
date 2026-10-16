@@ -43,9 +43,16 @@ adb shell am start -W -n "$PKG/io.github.mikolajkakol.easymarkdown.MainActivity"
 shot light_top 10
 scroll 1300
 shot light_diagrams
-# Tap the flowchart to open it full screen.
+# Tap the first diagram on screen (found by its accessibility label) to open it full screen.
 close_dialogs
-adb shell input tap 540 1080
+adb shell uiautomator dump /sdcard/ui.xml > /dev/null
+read -r X Y < <(adb exec-out cat /sdcard/ui.xml | python3 -c '
+import re, sys
+m = re.search(r"content-desc=\"Mermaid diagram\"[^>]*bounds=\"\[(\d+),(\d+)\]\[(\d+),(\d+)\]\"", sys.stdin.read())
+x1, y1, x2, y2 = map(int, m.groups())
+print((x1 + x2) // 2, (y1 + y2) // 2)')
+echo "tapping diagram at $X,$Y"
+adb shell input tap "$X" "$Y"
 shot light_fullscreen 6
 adb shell input keyevent KEYCODE_BACK
 
