@@ -7,8 +7,9 @@ PKG=io.github.mikolajkakol.easymarkdown.debug
 OUT=docs/screenshots
 mkdir -p "$OUT"
 
-shot() { sleep "${2:-4}"; adb exec-out screencap -p > "$OUT/$1.png"; echo "captured $1"; }
-scroll() { adb shell input swipe 540 1800 540 $((1800 - $1)) 600; }
+close_dialogs() { adb shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS > /dev/null || true; }
+shot() { sleep "${2:-4}"; close_dialogs; sleep 1; adb exec-out screencap -p > "$OUT/$1.png"; echo "captured $1"; }
+scroll() { close_dialogs; adb shell input swipe 540 1800 540 $((1800 - $1)) 600; }
 
 adb install -r "$APK"
 
@@ -25,6 +26,11 @@ check_handler "content://com.android.externalstorage.documents/document/primary%
 check_handler "content://com.example.files/root/my.notes.v2.markdown" "application/octet-stream"
 check_handler "file:///sdcard/Download/readme.md" "text/x-markdown"
 
+# The emulator launcher tends to ANR right after boot and its dialog swallows input; it is not needed here.
+sleep 20
+adb shell pm disable-user --user 0 com.google.android.apps.nexuslauncher || true
+close_dialogs
+
 # Clean status bar.
 adb shell settings put global sysui_demo_allowed 1
 adb shell am broadcast -a com.android.systemui.demo -e command enter
@@ -38,6 +44,7 @@ shot light_top 10
 scroll 1300
 shot light_diagrams
 # Tap the flowchart to open it full screen.
+close_dialogs
 adb shell input tap 540 1080
 shot light_fullscreen 6
 adb shell input keyevent KEYCODE_BACK
@@ -48,6 +55,7 @@ sleep 8
 adb shell am force-stop "$PKG"
 adb shell am start -W -n "$PKG/io.github.mikolajkakol.easymarkdown.MainActivity"
 sleep 8
+close_dialogs
 scroll 1300
 scroll 900
 shot dark_diagrams
