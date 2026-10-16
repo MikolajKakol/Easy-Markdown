@@ -1,6 +1,8 @@
 package io.github.mikolajkakol.easymarkdown
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,7 +19,11 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -34,7 +40,14 @@ fun App(
     darkTheme: Boolean = isSystemInDarkTheme(),
 ) {
     MaterialTheme(colorScheme = if (darkTheme) darkColorScheme() else lightColorScheme()) {
-        DocumentScreen(document, darkTheme, onOpenFile, onShowSample)
+        var openedDiagram by rememberSaveable(document) { mutableStateOf<String?>(null) }
+        // The diagram screen is drawn over the document so its scroll position and rendered diagrams are kept.
+        Box(Modifier.fillMaxSize()) {
+            DocumentScreen(document, darkTheme, onOpenFile, onShowSample, onOpenDiagram = { openedDiagram = it })
+            openedDiagram?.let { code ->
+                DiagramScreen(code = code, darkTheme = darkTheme, onClose = { openedDiagram = null })
+            }
+        }
     }
 }
 
@@ -45,6 +58,7 @@ private fun DocumentScreen(
     darkTheme: Boolean,
     onOpenFile: (() -> Unit)?,
     onShowSample: (() -> Unit)?,
+    onOpenDiagram: (String) -> Unit,
 ) {
     Scaffold(
         topBar = {
@@ -83,11 +97,20 @@ private fun DocumentScreen(
                         typography = typography,
                         modifier = Modifier.fillMaxWidth(),
                     )
-                    is DocumentSegment.Mermaid -> LocalMermaidRenderer.current.Render(
-                        code = segment.code,
-                        darkTheme = darkTheme,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
+                    is DocumentSegment.Mermaid -> Box(Modifier.fillMaxWidth()) {
+                        LocalMermaidRenderer.current.Render(
+                            code = segment.code,
+                            darkTheme = darkTheme,
+                            zoomable = false,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                        // Covers the diagram so taps open the full screen view instead of reaching the WebView.
+                        Box(
+                            Modifier
+                                .matchParentSize()
+                                .clickable(onClickLabel = "Open diagram") { onOpenDiagram(segment.code) },
+                        )
+                    }
                 }
             }
         }

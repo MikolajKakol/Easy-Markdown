@@ -24,6 +24,10 @@ adb shell am start -W -n "$PKG/io.github.mikolajkakol.easymarkdown.MainActivity"
 shot light_top 10
 scroll 1300
 shot light_diagrams
+# Tap the flowchart to open it full screen.
+adb shell input tap 540 1080
+shot light_fullscreen 6
+adb shell input keyevent KEYCODE_BACK
 
 # Switching theme recreates the activity; scroll again once diagrams re-rendered.
 adb shell cmd uimode night yes

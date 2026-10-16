@@ -1,6 +1,8 @@
 package io.github.mikolajkakol.easymarkdown
 
+import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.provider.OpenableColumns
 import androidx.activity.ComponentActivity
@@ -14,6 +16,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import java.io.Serializable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -22,33 +25,53 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-        val launchUri = intent?.data?.toString()
+        val launchSource = intent?.let(::documentSource)
 
         setContent {
-            var documentUri by rememberSaveable { mutableStateOf(launchUri) }
+            // Only the source (URI or shared text) is saved; file contents are re-read after recreation.
+            var source by rememberSaveable { mutableStateOf(launchSource) }
             var document by remember {
-                mutableStateOf(if (documentUri == null) SampleDocument else OpenedDocument("Loading…", ""))
+                mutableStateOf(if (source == null) SampleDocument else OpenedDocument("Loading…", ""))
             }
 
-            LaunchedEffect(documentUri) {
-                val uri = documentUri ?: return@LaunchedEffect
-                document = withContext(Dispatchers.IO) { readDocument(Uri.parse(uri)) }
+            LaunchedEffect(source) {
+                when (val current = source) {
+                    null -> Unit
+                    is DocumentSource.Text -> document = OpenedDocument(current.title, current.markdown)
+                    is DocumentSource.File -> document = withContext(Dispatchers.IO) { readDocument(Uri.parse(current.uri)) }
+                }
             }
 
             val openFile = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-                if (uri != null) documentUri = uri.toString()
+                if (uri != null) source = DocumentSource.File(uri.toString())
             }
 
             App(
                 document = document,
                 onOpenFile = { openFile.launch(arrayOf("text/markdown", "text/x-markdown", "text/plain", "application/octet-stream")) },
                 onShowSample = {
-                    documentUri = null
+                    source = null
                     document = SampleDocument
                 },
             )
         }
     }
+
+    /** What to show for an "Open with" or share intent; null for a plain launch. */
+    private fun documentSource(intent: Intent): DocumentSource? = when (intent.action) {
+        Intent.ACTION_VIEW -> intent.data?.let { DocumentSource.File(it.toString()) }
+        Intent.ACTION_SEND -> intent.streamUri()?.let { DocumentSource.File(it.toString()) }
+            ?: intent.getCharSequenceExtra(Intent.EXTRA_TEXT)?.let { text ->
+                val title = intent.getStringExtra(Intent.EXTRA_SUBJECT)?.takeIf { it.isNotBlank() } ?: "Shared text"
+                DocumentSource.Text(title, text.toString())
+            }
+        else -> null
+    }
+
+    @Suppress("DEPRECATION")
+    private fun Intent.streamUri(): Uri? =
+        if (Build.VERSION.SDK_INT >= 33) getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java)
+        else getParcelableExtra(Intent.EXTRA_STREAM)
 
     private fun readDocument(uri: Uri): OpenedDocument = try {
         val text = contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
@@ -63,4 +86,12 @@ class MainActivity : ComponentActivity() {
             if (cursor.moveToFirst()) cursor.getString(0) else null
         }
     }.getOrNull() ?: uri.lastPathSegment
+}
+
+private sealed interface DocumentSource : Serializable {
+    /** A file opened from a content/file URI. */
+    data class File(val uri: String) : DocumentSource
+
+    /** Markdown shared directly as text. */
+    data class Text(val title: String, val markdown: String) : DocumentSource
 }

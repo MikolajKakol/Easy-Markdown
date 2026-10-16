@@ -8,6 +8,9 @@ Przeglądarka plików **Markdown** z obsługą diagramów **Mermaid**, napisana 
   <img src="docs/screenshots/light_diagrams.png" width="260" alt="Diagramy Mermaid – flowchart i sequence">
   <img src="docs/screenshots/dark_diagrams.png" width="260" alt="Ciemny motyw">
 </p>
+<p align="center">
+  <img src="docs/screenshots/light_fullscreen.png" width="260" alt="Diagram na pełnym ekranie z pinch-to-zoom">
+</p>
 
 ## Funkcje
 
@@ -15,7 +18,9 @@ Przeglądarka plików **Markdown** z obsługą diagramów **Mermaid**, napisana 
   [multiplatform-markdown-renderer](https://github.com/mikepenz/multiplatform-markdown-renderer),
 - diagramy Mermaid z bloków ```` ```mermaid ```` – renderowane przez dołączony lokalnie
   [mermaid.js](https://mermaid.js.org) (działa offline), z jasnym/ciemnym motywem,
-- otwieranie plików przez systemowy wybór pliku (**Open**) oraz „Otwórz za pomocą” z innych aplikacji.
+- tapnięcie diagramu otwiera go na pełnym ekranie z pinch-to-zoom i przesuwaniem,
+- otwieranie plików przez systemowy wybór pliku (**Open**), „Otwórz za pomocą” oraz
+  **Udostępnij** – aplikacja przyjmuje udostępniane pliki `.md`/tekstowe oraz sam tekst (renderowany jako Markdown).
 
 ## Struktura
 

@@ -2,11 +2,20 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script>
+        // "#zoom" = full screen mode: diagram fits the screen and the user can pinch to zoom.
+        var zoomMode = location.hash === '#zoom';
+        document.write('<meta name="viewport" content="width=device-width, initial-scale=1, ' +
+            (zoomMode ? 'minimum-scale=1, maximum-scale=10, user-scalable=yes' : 'user-scalable=no') + '">');
+        if (zoomMode) document.documentElement.className = 'zoom';
+    </script>
     <style>
         html, body { margin: 0; padding: 0; background: transparent; overflow: hidden; }
         #diagram { display: flex; justify-content: center; }
         #diagram svg { max-width: 100%; height: auto; }
+        html.zoom, html.zoom body { overflow: visible; }
+        html.zoom #diagram { min-height: 100vh; align-items: center; padding: 8px; box-sizing: border-box; }
+        html.zoom #diagram svg { max-height: calc(100vh - 16px); }
         #error { font-family: monospace; font-size: 13px; white-space: pre-wrap; color: #d32f2f; padding: 8px; }
     </style>
     <script src="mermaid.min.js"></script>

@@ -7,6 +7,7 @@ import android.os.Looper
 import android.webkit.JavascriptInterface
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -23,18 +24,21 @@ private const val MIN_HEIGHT_DP = 48
 
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
-actual fun MermaidDiagram(code: String, darkTheme: Boolean, modifier: Modifier) {
+actual fun MermaidDiagram(code: String, darkTheme: Boolean, zoomable: Boolean, modifier: Modifier) {
     var heightDp by remember { mutableIntStateOf(MIN_HEIGHT_DP) }
     val bridge = remember { MermaidWebBridge(onHeight = { heightDp = maxOf(it, MIN_HEIGHT_DP) }) }
     bridge.update(code, darkTheme)
 
     AndroidView(
-        modifier = modifier.height(heightDp.dp),
+        modifier = if (zoomable) modifier else modifier.height(heightDp.dp),
         factory = { context ->
             WebView(context).apply {
                 setBackgroundColor(Color.TRANSPARENT)
-                isVerticalScrollBarEnabled = false
-                isHorizontalScrollBarEnabled = false
+                isVerticalScrollBarEnabled = zoomable
+                isHorizontalScrollBarEnabled = zoomable
+                settings.setSupportZoom(zoomable)
+                settings.builtInZoomControls = zoomable
+                settings.displayZoomControls = false
                 settings.javaScriptEnabled = true
                 settings.allowFileAccess = false
                 settings.allowContentAccess = false
@@ -45,7 +49,7 @@ actual fun MermaidDiagram(code: String, darkTheme: Boolean, modifier: Modifier) 
                     }
                 }
                 // Assets are still readable through file:///android_asset even with allowFileAccess = false.
-                loadUrl(ASSET_BASE_URL + "index.html")
+                loadUrl(ASSET_BASE_URL + if (zoomable) "index.html#zoom" else "index.html")
             }
         },
         onRelease = { it.destroy() },
@@ -84,4 +88,9 @@ private class MermaidWebBridge(private val onHeight: (Int) -> Unit) {
     fun onHeight(height: Int) {
         mainHandler.post { onHeight.invoke(height) }
     }
+}
+
+@Composable
+actual fun PlatformBackHandler(enabled: Boolean, onBack: () -> Unit) {
+    BackHandler(enabled = enabled, onBack = onBack)
 }

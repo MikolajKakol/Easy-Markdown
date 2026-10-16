@@ -59,6 +59,14 @@ class AppSnapshotTest {
         )
     }
 
+    @Test
+    @Config(qualifiers = "w411dp-h891dp-xhdpi")
+    fun diagramFullScreen() = snapshot("diagram_fullscreen", waitForText = "Diagram") {
+        MaterialTheme {
+            DiagramScreen(code = "graph TD\n  A --> B", darkTheme = false, onClose = {})
+        }
+    }
+
     /** Markdown is parsed asynchronously, so wait for [waitForText] before capturing. */
     private fun snapshot(name: String, waitForText: String, content: @Composable () -> Unit) {
         composeRule.setContent {
@@ -71,7 +79,7 @@ class AppSnapshotTest {
     }
 }
 
-private val PlaceholderMermaidRenderer = MermaidRenderer { code, _, modifier ->
+private val PlaceholderMermaidRenderer = MermaidRenderer { code, _, _, modifier ->
     Column(
         modifier = modifier
             .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp))
