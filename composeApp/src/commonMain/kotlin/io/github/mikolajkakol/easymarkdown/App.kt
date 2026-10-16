@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.mikepenz.markdown.m3.Markdown
+import com.mikepenz.markdown.m3.markdownTypography
 
 data class OpenedDocument(val title: String, val content: String)
 
@@ -57,6 +58,16 @@ private fun DocumentScreen(
         },
     ) { padding ->
         val segments = remember(document.content) { splitDocument(document.content) }
+        val typography = with(MaterialTheme.typography) {
+            markdownTypography(
+                h1 = headlineLarge,
+                h2 = headlineMedium,
+                h3 = headlineSmall,
+                h4 = titleLarge,
+                h5 = titleMedium,
+                h6 = titleSmall,
+            )
+        }
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -69,6 +80,7 @@ private fun DocumentScreen(
                 when (segment) {
                     is DocumentSegment.Markdown -> Markdown(
                         content = segment.text,
+                        typography = typography,
                         modifier = Modifier.fillMaxWidth(),
                     )
                     is DocumentSegment.Mermaid -> LocalMermaidRenderer.current.Render(

@@ -22,14 +22,17 @@ adb shell am broadcast -a com.android.systemui.demo -e command battery -e level 
 adb shell cmd uimode night no
 adb shell am start -W -n "$PKG/io.github.mikolajkakol.easymarkdown.MainActivity"
 shot light_top 10
-scroll 1500
-shot light_flowchart
-scroll 1100
-shot light_sequence
+scroll 1300
+shot light_diagrams
 
+# Switching theme recreates the activity; scroll again once diagrams re-rendered.
 adb shell cmd uimode night yes
-shot dark_sequence 8
-scroll 1100
-shot dark_pie
+sleep 8
+adb shell am force-stop "$PKG"
+adb shell am start -W -n "$PKG/io.github.mikolajkakol.easymarkdown.MainActivity"
+sleep 8
+scroll 1300
+scroll 900
+shot dark_diagrams
 
 adb shell cmd uimode night no

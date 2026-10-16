@@ -26,7 +26,7 @@ import org.robolectric.annotation.GraphicsMode
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
-@Config(sdk = [35], qualifiers = "w411dp-h2200dp-xhdpi")
+@Config(sdk = [35], qualifiers = "w411dp-h1500dp-xhdpi")
 class AppSnapshotTest {
 
     @Test
