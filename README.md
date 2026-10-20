@@ -1,7 +1,7 @@
 # Easy Markdown
 
 Przeglądarka plików **Markdown** z obsługą diagramów **Mermaid**, napisana w
-[Compose Multiplatform](https://www.jetbrains.com/compose-multiplatform/). Pierwsza wersja działa na Androidzie.
+[Compose Multiplatform](https://www.jetbrains.com/compose-multiplatform/). Działa na Androidzie i macOS.
 
 <p align="center">
   <img src="docs/screenshots/light_top.png" width="260" alt="Markdown – formatowanie, listy, tabela, kod">
@@ -29,6 +29,29 @@ Przeglądarka plików **Markdown** z obsługą diagramów **Mermaid**, napisana 
   **Udostępnij**; aplikacja rejestruje się jako obsługująca pliki `.md`, `.markdown`, `.mdown`, `.mkd`
   (także gdy menedżer plików podaje ogólny typ MIME), więc można ją ustawić jako domyślną. Przyjmuje udostępniane pliki `.md`/tekstowe oraz sam tekst (renderowany jako Markdown).
 
+## macOS
+
+Aplikacja na Maca (Apple Silicon) do pobrania jako `.dmg` z
+[Releases → latest-macos](https://github.com/MikolajKakol/Easy-Markdown/releases/tag/latest-macos)
+(lub z **Actions → macOS build → Artifacts** dla dowolnej gałęzi).
+
+1. Otwórz `.dmg` i przeciągnij **Easy Markdown** do **Applications**.
+2. Aplikacja nie jest notaryzowana, więc przy pierwszym uruchomieniu macOS ją zablokuje: otwórz
+   **Ustawienia systemowe → Prywatność i ochrona** i kliknij **Otwórz mimo to**. Alternatywnie:
+   `xattr -dr com.apple.quarantine "/Applications/Easy Markdown.app"`.
+3. Przy pierwszym uruchomieniu aplikacja ustawia się jako domyślna dla plików Markdown
+   (`.md`, `.markdown`, `.mdown`, `.mkd`), więc `open plik.md` i podwójne kliknięcie w Finderze otwierają
+   ją. Gdy później wybierzesz inną aplikację, Easy Markdown tego nie nadpisze – można to przywrócić z menu
+   **File → Make Default App for Markdown Files** (albo w Finderze: **Pokaż info → Otwórz za pomocą →
+   Zmień wszystko**).
+
+Każdy plik otwiera się w osobnym oknie (ponowne otwarcie tego samego pliku odświeża jego okno).
+Skróty: ⌘O otwórz, ⌘R odśwież, ⌘W zamknij okno, Esc zamyka widok pełnoekranowy. Diagram na pełnym
+ekranie: przeciąganie lub przewijanie przesuwa, ⌘ + przewijanie przybliża, podwójne kliknięcie dopasowuje.
+
+Diagramy Mermaid renderuje ten sam dołączony mermaid.js w niewidocznym WebView z JavaFX, a wynik
+jest pokazywany jako obraz.
+
 ## Struktura
 
 ```
@@ -37,6 +60,9 @@ composeApp/
   src/commonTest       – testy jednostkowe parsera
   src/androidMain      – Activity, renderer Mermaid (WebView), assets/mermaid
   src/androidUnitTest  – testy snapshot (Roborazzi + Robolectric)
+  src/desktopMain      – aplikacja macOS: okna, renderer Mermaid (JavaFX WebView), domyślna aplikacja
+  src/desktopTest      – test renderowania diagramów i zrzuty ekranu wersji desktop
+  icons/               – ikona aplikacji macOS
   snapshots/           – wzorcowe obrazy testów snapshot
   debug.keystore       – wspólny klucz debug (APK z CI instalują się jeden na drugim)
 docs/screenshots/      – zrzuty z emulatora używane w README
@@ -54,6 +80,17 @@ scripts/               – skrypt robiący zrzuty na emulatorze
 
 Wymagane JDK 17+ i Android SDK (API 36).
 
+Na Macu:
+
+```bash
+./gradlew :composeApp:run                     # uruchomienie wersji desktop
+./gradlew :composeApp:desktopTest             # testy, zrzuty w composeApp/build/desktop-screenshots/
+./gradlew :composeApp:createDistributable     # Easy Markdown.app w composeApp/build/compose/binaries/
+./gradlew :composeApp:packageDmg              # .dmg (bez podpisu)
+```
+
+Ustawianie domyślnej aplikacji działa tylko w zbudowanej paczce `.app`, nie przy `run`.
+
 ### Testy snapshot
 
 Testy w `AppSnapshotTest` renderują ekran aplikacji w Robolectric i porównują go z obrazami
@@ -68,6 +105,9 @@ na zrzutach z emulatora powyżej.
 - **Android build** ([`android.yml`](.github/workflows/android.yml)) – przy każdym pushu i PR-ze:
   testy jednostkowe, weryfikacja snapshotów i debug APK do pobrania w **Actions → Artifacts**.
   Uruchomienie ręczne: *Run workflow*.
+- **macOS build** ([`macos.yml`](.github/workflows/macos.yml)) – przy każdym pushu i PR-ze na runnerze
+  macOS: testy, aplikacja podpisana ad hoc, `.dmg` w **Artifacts** (z gałęzi domyślnej także w Releases
+  jako `latest-macos`) oraz zrzuty ekranu wersji desktop w artefakcie `desktop-screenshots`.
 - **Update screenshots** ([`screenshots.yml`](.github/workflows/screenshots.yml)) – uruchamiane ręcznie:
   nagrywa nowe wzorce snapshotów, robi zrzuty ekranu na emulatorze i commituje je na gałąź,
   na której zostało uruchomione. Użyj po zmianach w UI.

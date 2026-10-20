@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        html, body { margin: 0; padding: 0; background: transparent; overflow: hidden; }
+        #content { display: inline-block; }
+        #error { font-family: monospace; font-size: 13px; white-space: pre-wrap; color: #d32f2f; padding: 8px; }
+    </style>
+    <script src="mermaid.min.js"></script>
+</head>
+<body>
+<div id="content"><div id="diagram"></div><div id="error"></div></div>
+<script>
+    // Renders the diagram at most maxWidth CSS px wide, then reports the size of the rendered content
+    // so the app can snapshot it. Text is drawn as SVG text: HTML labels are misplaced in JavaFX WebKit.
+    async function render(code, dark, maxWidth) {
+        mermaid.initialize({
+            startOnLoad: false,
+            theme: dark ? 'dark' : 'default',
+            securityLevel: 'strict',
+            htmlLabels: false,
+            flowchart: { htmlLabels: false },
+        });
+        var target = document.getElementById('diagram');
+        var error = document.getElementById('error');
+        target.innerHTML = '';
+        error.textContent = '';
+        error.style.maxWidth = maxWidth + 'px';
+        try {
+            var result = await mermaid.render('mermaid-svg', code);
+            target.innerHTML = result.svg;
+            var svg = target.querySelector('svg');
+            var box = svg.viewBox.baseVal;
+            if (box && box.width > 0 && box.height > 0) {
+                var width = Math.min(maxWidth, box.width);
+                svg.style.maxWidth = 'none';
+                svg.style.width = width + 'px';
+                svg.style.height = (box.height * width / box.width) + 'px';
+            }
+        } catch (e) {
+            target.innerHTML = '';
+            error.textContent = 'Mermaid error:\n' + (e && e.message ? e.message : e);
+        }
+        requestAnimationFrame(function () {
+            var rect = document.getElementById('content').getBoundingClientRect();
+            EasyMarkdown.onRendered(Math.ceil(rect.width), Math.ceil(rect.height));
+        });
+    }
+</script>
+</body>
+</html>
