@@ -1,0 +1,80 @@
+name: macOS build
+
+on:
+  push:
+    branches: [ "**" ]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Test & build macOS app
+    # Apple Silicon runner, so the app is built for Apple Silicon Macs.
+    runs-on: macos-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Unit tests
+        run: ./gradlew :composeApp:desktopTest --stacktrace
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-screenshots
+          path: composeApp/build/desktop-screenshots/
+
+      - name: Build app
+        run: ./gradlew :composeApp:createDistributable --stacktrace
+
+      # Ad-hoc signature: the app is not notarized, but macOS lets it run after "Open Anyway".
+      - name: Sign and package DMG
+        run: |
+          APP="composeApp/build/compose/binaries/main/app/Easy Markdown.app"
+          codesign --force --deep --sign - "$APP"
+          codesign --verify --deep --strict "$APP"
+          mkdir dmg
+          cp -R "$APP" dmg/
+          ln -s /Applications dmg/Applications
+          hdiutil create -volname "Easy Markdown" -srcfolder dmg -ov -format UDZO easy-markdown-macos.dmg
+
+      - name: Upload DMG
+        uses: actions/upload-artifact@v4
+        with:
+          name: easy-markdown-macos-${{ github.run_number }}
+          path: easy-markdown-macos.dmg
+          if-no-files-found: error
+
+      # Rolling pre-release with a stable download link.
+      - name: Publish DMG to GitHub Releases
+        if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete latest-macos --cleanup-tag --yes || true
+          gh release create latest-macos easy-markdown-macos.dmg \
+            --prerelease \
+            --target "$GITHUB_SHA" \
+            --title "Latest macOS build (#${{ github.run_number }})" \
+            --notes "macOS app (Apple Silicon) built from ${GITHUB_SHA::7} by run #${{ github.run_number }}."
+
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-test-reports
+          path: composeApp/build/reports/tests/

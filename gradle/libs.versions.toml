@@ -3,6 +3,9 @@ agp = "8.13.0"
 kotlin = "2.2.21"
 composeMultiplatform = "1.9.3"
 androidx-activity = "1.10.1"
+kotlinx-coroutines = "1.10.2"
+javafx = "21.0.8"
+jna = "5.17.0"
 markdownRenderer = "0.38.1"
 roborazzi = "1.76.0"
 robolectric = "4.16.1"
@@ -14,6 +17,8 @@ android-targetSdk = "36"
 
 [libraries]
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activity" }
+kotlinx-coroutines-swing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version.ref = "kotlinx-coroutines" }
+jna = { module = "net.java.dev.jna:jna", version.ref = "jna" }
 markdown-renderer-m3 = { module = "com.mikepenz:multiplatform-markdown-renderer-m3", version.ref = "markdownRenderer" }
 junit = { module = "junit:junit", version.ref = "junit" }
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
