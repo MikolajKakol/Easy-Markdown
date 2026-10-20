@@ -103,7 +103,9 @@ na zrzutach z emulatora powyżej.
 ## CI (GitHub Actions)
 
 - **Android build** ([`android.yml`](.github/workflows/android.yml)) – przy każdym pushu i PR-ze:
-  testy jednostkowe, weryfikacja snapshotów i debug APK do pobrania w **Actions → Artifacts**.
+  testy jednostkowe, weryfikacja snapshotów i debug APK do pobrania w **Actions → Artifacts** (z gałęzi
+  domyślnej także w Releases jako
+  [`latest-android-debug`](https://github.com/MikolajKakol/Easy-Markdown/releases/tag/latest-android-debug)).
   Uruchomienie ręczne: *Run workflow*.
 - **macOS build** ([`macos.yml`](.github/workflows/macos.yml)) – przy każdym pushu i PR-ze na runnerze
   macOS: testy, aplikacja podpisana ad hoc, `.dmg` w **Artifacts** (z gałęzi domyślnej także w Releases
