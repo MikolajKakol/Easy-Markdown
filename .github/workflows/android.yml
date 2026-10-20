@@ -41,7 +41,7 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: easy-markdown-debug-${{ github.run_number }}
+          name: easy-markdown-android-debug-${{ github.run_number }}
           path: composeApp/build/outputs/apk/debug/*.apk
           if-no-files-found: error
 
@@ -51,12 +51,14 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          cp composeApp/build/outputs/apk/debug/composeApp-debug.apk easy-markdown-debug.apk
+          cp composeApp/build/outputs/apk/debug/composeApp-debug.apk easy-markdown-android-debug.apk
+          # Removes the release published under the previous name.
           gh release delete latest-debug --cleanup-tag --yes || true
-          gh release create latest-debug easy-markdown-debug.apk \
+          gh release delete latest-android-debug --cleanup-tag --yes || true
+          gh release create latest-android-debug easy-markdown-android-debug.apk \
             --prerelease \
             --target "$GITHUB_SHA" \
-            --title "Latest debug build (#${{ github.run_number }})" \
+            --title "Latest Android debug build (#${{ github.run_number }})" \
             --notes "Debug APK built from ${GITHUB_SHA::7} by run #${{ github.run_number }}."
 
       - name: Upload test reports
