@@ -7,6 +7,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -136,9 +137,9 @@ private fun DocumentScreen(
                             CodeBlock(segment, Modifier.horizontalScroll(rememberScrollState()).padding(12.dp))
                             CopyButton({ segment.code }, "Copy code", Modifier.align(Alignment.TopEnd).padding(4.dp))
                         }
-                        // Not full width, so the copy button sits on the table's corner.
-                        is DocumentSegment.Table -> Box {
-                            Box(Modifier.horizontalScroll(rememberScrollState())) {
+                        // The copy button sits beside the table rather than over its header cells.
+                        is DocumentSegment.Table -> Row {
+                            Box(Modifier.weight(1f, fill = false).horizontalScroll(rememberScrollState())) {
                                 MarkdownTable(
                                     table = segment,
                                     maxColumnWidth = 260.dp,
@@ -147,7 +148,7 @@ private fun DocumentScreen(
                                         .clickable(onClickLabel = "Open table") { onExpand(index) },
                                 )
                             }
-                            CopyButton({ tableAsText(segment) }, "Copy table", Modifier.align(Alignment.TopEnd).padding(4.dp))
+                            CopyButton({ tableAsText(segment) }, "Copy table", Modifier.padding(start = 4.dp))
                         }
                     }
                 }
