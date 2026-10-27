@@ -1,6 +1,7 @@
 package io.github.mikolajkakol.easymarkdown
 
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -33,7 +34,7 @@ fun DiagramScreen(code: String, darkTheme: Boolean, onClose: () -> Unit, modifie
 @Composable
 fun TableScreen(table: DocumentSegment.Table, onClose: () -> Unit, modifier: Modifier = Modifier) {
     DetailScreen(title = "Table", copyText = { tableAsText(table) }, onClose = onClose, modifier = modifier) { padding ->
-        SelectionContainer(
+        Box(
             Modifier
                 .fillMaxSize()
                 .padding(padding)
@@ -41,7 +42,7 @@ fun TableScreen(table: DocumentSegment.Table, onClose: () -> Unit, modifier: Mod
                 .horizontalScroll(rememberScrollState())
                 .padding(16.dp),
         ) {
-            MarkdownTable(table, maxColumnWidth = 360.dp)
+            SelectionContainer { MarkdownTable(table, maxColumnWidth = 360.dp) }
         }
     }
 }
@@ -49,8 +50,13 @@ fun TableScreen(table: DocumentSegment.Table, onClose: () -> Unit, modifier: Mod
 /** Full screen view of a code block, scrollable in both directions. */
 @Composable
 fun CodeScreen(code: DocumentSegment.Code, onClose: () -> Unit, modifier: Modifier = Modifier) {
-    DetailScreen(title = code.language.ifEmpty { "Code" }, copyText = { code.code }, onClose = onClose, modifier = modifier) { padding ->
-        SelectionContainer(
+    DetailScreen(
+        title = code.language.ifEmpty { "Code" },
+        copyText = { code.code },
+        onClose = onClose,
+        modifier = modifier,
+    ) { padding ->
+        Box(
             Modifier
                 .fillMaxSize()
                 .padding(padding)
@@ -58,7 +64,7 @@ fun CodeScreen(code: DocumentSegment.Code, onClose: () -> Unit, modifier: Modifi
                 .horizontalScroll(rememberScrollState())
                 .padding(16.dp),
         ) {
-            CodeBlock(code)
+            SelectionContainer { CodeBlock(code) }
         }
     }
 }

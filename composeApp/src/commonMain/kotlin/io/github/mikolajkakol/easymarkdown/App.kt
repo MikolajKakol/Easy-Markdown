@@ -136,7 +136,8 @@ private fun DocumentScreen(
                             CodeBlock(segment, Modifier.horizontalScroll(rememberScrollState()).padding(12.dp))
                             CopyButton({ segment.code }, "Copy code", Modifier.align(Alignment.TopEnd).padding(4.dp))
                         }
-                        is DocumentSegment.Table -> Box(Modifier.fillMaxWidth()) {
+                        // Not full width, so the copy button sits on the table's corner.
+                        is DocumentSegment.Table -> Box {
                             Box(Modifier.horizontalScroll(rememberScrollState())) {
                                 MarkdownTable(
                                     table = segment,
