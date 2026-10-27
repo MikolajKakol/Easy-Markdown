@@ -25,6 +25,9 @@ Przeglądarka plików **Markdown** z obsługą diagramów **Mermaid**, napisana 
 - bloki kodu bez zawijania wierszy, z przewijaniem w poziomie i fontem JetBrains Mono (pełny zestaw znaków
   ramek `┌─┐│└┘` i strzałek), więc diagramy ASCII się nie rozjeżdżają; tapnięcie otwiera blok na pełnym ekranie,
 - tapnięcie diagramu otwiera go na pełnym ekranie z pinch-to-zoom i przesuwaniem,
+- zaznaczanie i kopiowanie tekstu w całym dokumencie oraz w widokach pełnoekranowych; ikonka kopiowania
+  w rogu bloku kodu, tabeli (kopiowana jako wartości rozdzielone tabulatorami – wkleja się do arkusza)
+  i diagramu (kopiuje źródło Mermaid),
 - otwieranie plików przez systemowy wybór pliku (**Open**), „Otwórz za pomocą” oraz
   **Udostępnij**; aplikacja rejestruje się jako obsługująca pliki `.md`, `.markdown`, `.mdown`, `.mkd`
   (także gdy menedżer plików podaje ogólny typ MIME), więc można ją ustawić jako domyślną. Przyjmuje udostępniane pliki `.md`/tekstowe oraz sam tekst (renderowany jako Markdown).

@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -27,6 +28,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.contentDescription
@@ -91,54 +93,61 @@ private fun DocumentScreen(
                 h6 = titleSmall,
             )
         }
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            segments.forEachIndexed { index, segment ->
-                when (segment) {
-                    is DocumentSegment.Markdown -> Markdown(
-                        content = segment.text,
-                        typography = typography,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    is DocumentSegment.Mermaid -> Box(Modifier.fillMaxWidth()) {
-                        LocalMermaidRenderer.current.Render(
-                            code = segment.code,
-                            darkTheme = darkTheme,
-                            zoomable = false,
+        // The whole document is one selection, so text can be selected across paragraphs, tables and code.
+        SelectionContainer(Modifier.fillMaxSize().padding(padding)) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                segments.forEachIndexed { index, segment ->
+                    when (segment) {
+                        is DocumentSegment.Markdown -> Markdown(
+                            content = segment.text,
+                            typography = typography,
                             modifier = Modifier.fillMaxWidth(),
                         )
-                        // Covers the diagram so taps open the full screen view instead of reaching the WebView.
-                        Box(
+                        is DocumentSegment.Mermaid -> Box(Modifier.fillMaxWidth()) {
+                            LocalMermaidRenderer.current.Render(
+                                code = segment.code,
+                                darkTheme = darkTheme,
+                                zoomable = false,
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                            // Covers the diagram so taps open the full screen view instead of reaching the WebView.
+                            Box(
+                                Modifier
+                                    .matchParentSize()
+                                    .semantics { contentDescription = "Mermaid diagram" }
+                                    .clickable(onClickLabel = "Open diagram") { onExpand(index) },
+                            )
+                            CopyButton({ segment.code }, "Copy diagram source", Modifier.align(Alignment.TopEnd).padding(4.dp))
+                        }
+                        is DocumentSegment.Code -> Box(
                             Modifier
-                                .matchParentSize()
-                                .semantics { contentDescription = "Mermaid diagram" }
-                                .clickable(onClickLabel = "Open diagram") { onExpand(index) },
-                        )
-                    }
-                    is DocumentSegment.Code -> Box(
-                        Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(MaterialTheme.colorScheme.surfaceVariant)
-                            .semantics { contentDescription = "Code block" }
-                            .clickable(onClickLabel = "Open code") { onExpand(index) },
-                    ) {
-                        CodeBlock(segment, Modifier.horizontalScroll(rememberScrollState()).padding(12.dp))
-                    }
-                    is DocumentSegment.Table -> Box(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())) {
-                        MarkdownTable(
-                            table = segment,
-                            maxColumnWidth = 260.dp,
-                            modifier = Modifier
-                                .semantics { contentDescription = "Markdown table" }
-                                .clickable(onClickLabel = "Open table") { onExpand(index) },
-                        )
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant)
+                                .semantics { contentDescription = "Code block" }
+                                .clickable(onClickLabel = "Open code") { onExpand(index) },
+                        ) {
+                            CodeBlock(segment, Modifier.horizontalScroll(rememberScrollState()).padding(12.dp))
+                            CopyButton({ segment.code }, "Copy code", Modifier.align(Alignment.TopEnd).padding(4.dp))
+                        }
+                        is DocumentSegment.Table -> Box(Modifier.fillMaxWidth()) {
+                            Box(Modifier.horizontalScroll(rememberScrollState())) {
+                                MarkdownTable(
+                                    table = segment,
+                                    maxColumnWidth = 260.dp,
+                                    modifier = Modifier
+                                        .semantics { contentDescription = "Markdown table" }
+                                        .clickable(onClickLabel = "Open table") { onExpand(index) },
+                                )
+                            }
+                            CopyButton({ tableAsText(segment) }, "Copy table", Modifier.align(Alignment.TopEnd).padding(4.dp))
+                        }
                     }
                 }
             }
