@@ -31,7 +31,12 @@ private val TableShape = RoundedCornerShape(8.dp)
  * longer cell text wraps. The table is as wide as its columns, so wrap it in a horizontal scroll.
  */
 @Composable
-fun MarkdownTable(table: DocumentSegment.Table, maxColumnWidth: Dp, modifier: Modifier = Modifier) {
+fun MarkdownTable(
+    table: DocumentSegment.Table,
+    maxColumnWidth: Dp,
+    modifier: Modifier = Modifier,
+    highlights: Map<TableCell, Boolean> = emptyMap(),
+) {
     val colors = MaterialTheme.colorScheme
     val textStyle = MaterialTheme.typography.bodyMedium
     val codeStyle = SpanStyle(fontFamily = codeFontFamily(), background = colors.surfaceVariant)
@@ -45,17 +50,26 @@ fun MarkdownTable(table: DocumentSegment.Table, maxColumnWidth: Dp, modifier: Mo
         content = {
             rows.forEachIndexed { r, row ->
                 row.forEachIndexed { c, cell ->
+                    // Cells with a match are highlighted as a whole; true marks the selected match.
+                    val highlight = highlights[TableCell(r, c)]
                     Text(
                         text = remember(cell, colors) { inlineMarkdown(cell, codeStyle, linkStyles) },
                         style = textStyle,
                         fontWeight = if (r == 0) FontWeight.Bold else null,
+                        color = if (highlight != null) Color.Black else Color.Unspecified,
                         textAlign = when (table.alignments[c]) {
                             ColumnAlignment.Start -> TextAlign.Start
                             ColumnAlignment.Center -> TextAlign.Center
                             ColumnAlignment.End -> TextAlign.End
                         },
                         modifier = Modifier
-                            .background(if (r == 0) colors.surfaceVariant else Color.Transparent)
+                            .background(
+                                when {
+                                    highlight != null -> highlightStyle(highlight).background
+                                    r == 0 -> colors.surfaceVariant
+                                    else -> Color.Transparent
+                                },
+                            )
                             .drawBehind {
                                 val stroke = 1.dp.toPx()
                                 if (r < rows.lastIndex) {

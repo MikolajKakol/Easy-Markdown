@@ -25,9 +25,13 @@ Przeglądarka plików **Markdown** z obsługą diagramów **Mermaid**, napisana 
 - bloki kodu bez zawijania wierszy, z przewijaniem w poziomie i fontem JetBrains Mono (pełny zestaw znaków
   ramek `┌─┐│└┘` i strzałek), więc diagramy ASCII się nie rozjeżdżają; tapnięcie otwiera blok na pełnym ekranie,
 - tapnięcie diagramu otwiera go na pełnym ekranie z pinch-to-zoom i przesuwaniem,
+- wyszukiwanie w dokumencie (**Find**, na Macu ⌘F): podświetla wszystkie wyniki i przewija do bieżącego;
+  szuka w tekście tak, jak jest wyświetlany (bez znaczników Markdown), w tabelach, blokach kodu i kodzie diagramów,
 - otwieranie plików przez systemowy wybór pliku (**Open**), „Otwórz za pomocą” oraz
   **Udostępnij**; aplikacja rejestruje się jako obsługująca pliki `.md`, `.markdown`, `.mdown`, `.mkd`
-  (także gdy menedżer plików podaje ogólny typ MIME), więc można ją ustawić jako domyślną. Przyjmuje udostępniane pliki `.md`/tekstowe oraz sam tekst (renderowany jako Markdown).
+  (także gdy menedżer plików podaje ogólny typ MIME), więc można ją ustawić jako domyślną. Przyjmuje udostępniane pliki `.md`/tekstowe oraz sam tekst (renderowany jako Markdown),
+- otwarty plik jest wczytywany ponownie po powrocie do aplikacji oraz od razu po zmianie, gdy dostawca pliku o niej
+  powiadamia.
 
 ## macOS
 
@@ -46,7 +50,10 @@ Aplikacja na Maca (Apple Silicon) do pobrania jako `.dmg` z
    Zmień wszystko**).
 
 Każdy plik otwiera się w osobnym oknie (ponowne otwarcie tego samego pliku odświeża jego okno).
-Skróty: ⌘O otwórz, ⌘R odśwież, ⌘W zamknij okno, Esc zamyka widok pełnoekranowy. Diagram na pełnym
+Otwarty plik jest obserwowany: po zapisaniu go w innym edytorze okno odświeża się samo, z zachowaniem
+pozycji przewinięcia.
+Skróty: ⌘O otwórz, ⌘R odśwież, ⌘W zamknij okno, ⌘F szukaj (Enter / ⌘G następny wynik, ⇧Enter / ⇧⌘G
+poprzedni), Esc zamyka wyszukiwanie lub widok pełnoekranowy. Diagram na pełnym
 ekranie: przeciąganie lub przewijanie przesuwa, ⌘ + przewijanie przybliża, podwójne kliknięcie dopasowuje.
 
 Diagramy Mermaid renderuje ten sam dołączony mermaid.js w niewidocznym WebView z JavaFX, a wynik

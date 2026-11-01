@@ -30,6 +30,7 @@ import javax.swing.JOptionPane
 import javax.swing.SwingUtilities
 import kotlin.concurrent.thread
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.withContext
 
 private val isMac = System.getProperty("os.name").startsWith("Mac")
@@ -98,6 +99,7 @@ private class DocumentWindowState(file: File?) {
 private fun DocumentWindow(state: DocumentWindowState, documents: OpenDocuments) {
     var document by remember { mutableStateOf(if (state.file == null) SampleDocument else OpenedDocument("Loading…", "")) }
     val backHandlers = remember { BackHandlers() }
+    val search = rememberSearchState()
 
     Window(
         onCloseRequest = { documents.close(state) },
@@ -112,6 +114,14 @@ private fun DocumentWindow(state: DocumentWindowState, documents: OpenDocuments)
             window.rootPane.putClientProperty("Window.documentFile", file)
             document = withContext(Dispatchers.IO) { readDocument(file) }
             window.toFront()
+        }
+        // Shows the file's changes as it is edited elsewhere, without bringing the window to the front.
+        LaunchedEffect(state.file) {
+            val file = state.file ?: return@LaunchedEffect
+            fileChanges(file).collectLatest {
+                // Skips the moment between an editor deleting the file and writing it again.
+                if (file.isFile) document = withContext(Dispatchers.IO) { readDocument(file) }
+            }
         }
         val openFile: () -> Unit = { chooseMarkdownFile(window)?.let(documents::open) }
 
@@ -132,15 +142,20 @@ private fun DocumentWindow(state: DocumentWindowState, documents: OpenDocuments)
                     }
                 }
             }
+            Menu("Edit") {
+                Item("Find…", shortcut = shortcut(Key.F), onClick = search::open)
+                Item("Find Next", shortcut = shortcut(Key.G), onClick = search::next)
+                Item("Find Previous", shortcut = shortcut(Key.G, shift = true), onClick = search::previous)
+            }
         }
 
         CompositionLocalProvider(LocalBackHandlers provides backHandlers) {
-            App(document = document, onOpenFile = openFile)
+            App(document = document, onOpenFile = openFile, search = search)
         }
     }
 }
 
-private fun shortcut(key: Key) = KeyShortcut(key, meta = isMac, ctrl = !isMac)
+private fun shortcut(key: Key, shift: Boolean = false) = KeyShortcut(key, meta = isMac, ctrl = !isMac, shift = shift)
 
 private fun readDocument(file: File): OpenedDocument = try {
     OpenedDocument(title = file.name, content = file.readText())

@@ -40,6 +40,7 @@ kotlin {
             implementation(compose.material3)
             implementation(compose.ui)
             implementation(libs.markdown.renderer.m3)
+            implementation(libs.intellij.markdown)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
