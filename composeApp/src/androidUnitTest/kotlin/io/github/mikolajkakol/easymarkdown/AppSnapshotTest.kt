@@ -56,7 +56,7 @@ class AppSnapshotTest {
         val search = rememberSearchState()
         LaunchedEffect(Unit) {
             search.open()
-            search.field = TextFieldValue("table")
+            search.input = TextFieldValue("table")
             search.next()
         }
         App(document = SampleDocument, onOpenFile = {}, darkTheme = false, search = search)

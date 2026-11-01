@@ -47,8 +47,8 @@ import org.intellij.markdown.MarkdownTokenTypes
 class SearchState {
     var visible by mutableStateOf(false)
         private set
-    var field by mutableStateOf(TextFieldValue())
-    val query: String get() = field.text
+    var input by mutableStateOf(TextFieldValue())
+    val query: String get() = input.text
 
     /** Index of the selected match. */
     var current by mutableIntStateOf(0)
@@ -62,7 +62,7 @@ class SearchState {
     /** Shows the find bar and focuses it, selecting the previous query. */
     fun open() {
         visible = true
-        field = field.copy(selection = TextRange(0, field.text.length))
+        input = input.copy(selection = TextRange(0, input.text.length))
         focusRequests++
     }
 
@@ -102,10 +102,10 @@ fun FindBar(search: SearchState, modifier: Modifier = Modifier) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         OutlinedTextField(
-            value = search.field,
+            value = search.input,
             onValueChange = {
                 if (it.text != search.query) search.current = 0
-                search.field = it
+                search.input = it
             },
             placeholder = { Text("Find in document") },
             singleLine = true,
