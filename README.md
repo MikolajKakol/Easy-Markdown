@@ -27,7 +27,9 @@ Przeglądarka plików **Markdown** z obsługą diagramów **Mermaid**, napisana 
 - tapnięcie diagramu otwiera go na pełnym ekranie z pinch-to-zoom i przesuwaniem,
 - otwieranie plików przez systemowy wybór pliku (**Open**), „Otwórz za pomocą” oraz
   **Udostępnij**; aplikacja rejestruje się jako obsługująca pliki `.md`, `.markdown`, `.mdown`, `.mkd`
-  (także gdy menedżer plików podaje ogólny typ MIME), więc można ją ustawić jako domyślną. Przyjmuje udostępniane pliki `.md`/tekstowe oraz sam tekst (renderowany jako Markdown).
+  (także gdy menedżer plików podaje ogólny typ MIME), więc można ją ustawić jako domyślną. Przyjmuje udostępniane pliki `.md`/tekstowe oraz sam tekst (renderowany jako Markdown),
+- otwarty plik jest wczytywany ponownie po powrocie do aplikacji oraz od razu po zmianie, gdy dostawca pliku o niej
+  powiadamia.
 
 ## macOS
 
@@ -46,6 +48,8 @@ Aplikacja na Maca (Apple Silicon) do pobrania jako `.dmg` z
    Zmień wszystko**).
 
 Każdy plik otwiera się w osobnym oknie (ponowne otwarcie tego samego pliku odświeża jego okno).
+Otwarty plik jest obserwowany: po zapisaniu go w innym edytorze okno odświeża się samo, z zachowaniem
+pozycji przewinięcia.
 Skróty: ⌘O otwórz, ⌘R odśwież, ⌘W zamknij okno, Esc zamyka widok pełnoekranowy. Diagram na pełnym
 ekranie: przeciąganie lub przewijanie przesuwa, ⌘ + przewijanie przybliża, podwójne kliknięcie dopasowuje.
 

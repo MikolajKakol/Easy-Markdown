@@ -30,6 +30,7 @@ import javax.swing.JOptionPane
 import javax.swing.SwingUtilities
 import kotlin.concurrent.thread
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.withContext
 
 private val isMac = System.getProperty("os.name").startsWith("Mac")
@@ -112,6 +113,14 @@ private fun DocumentWindow(state: DocumentWindowState, documents: OpenDocuments)
             window.rootPane.putClientProperty("Window.documentFile", file)
             document = withContext(Dispatchers.IO) { readDocument(file) }
             window.toFront()
+        }
+        // Shows the file's changes as it is edited elsewhere, without bringing the window to the front.
+        LaunchedEffect(state.file) {
+            val file = state.file ?: return@LaunchedEffect
+            fileChanges(file).collectLatest {
+                // Skips the moment between an editor deleting the file and writing it again.
+                if (file.isFile) document = withContext(Dispatchers.IO) { readDocument(file) }
+            }
         }
         val openFile: () -> Unit = { chooseMarkdownFile(window)?.let(documents::open) }
 

@@ -1,17 +1,22 @@
 package io.github.mikolajkakol.easymarkdown
 
 import android.content.Intent
+import android.database.ContentObserver
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.provider.OpenableColumns
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -21,6 +26,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 class MainActivity : ComponentActivity() {
+
+    /** Incremented to read the opened file again, e.g. after it was edited in another app. */
+    private var fileChanges by mutableIntStateOf(0)
+    private var started = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
@@ -41,6 +50,28 @@ class MainActivity : ComponentActivity() {
                     is DocumentSource.File -> document = withContext(Dispatchers.IO) { readDocument(Uri.parse(current.uri)) }
                 }
             }
+            // Re-reads the file when its provider reports a change or the app comes back to the foreground.
+            val file = source as? DocumentSource.File
+            if (file != null) {
+                DisposableEffect(file) {
+                    val observer = object : ContentObserver(Handler(Looper.getMainLooper())) {
+                        override fun onChange(selfChange: Boolean) {
+                            fileChanges++
+                        }
+                    }
+                    // Not every provider supports observers; returning to the app still reloads the file.
+                    val registered = runCatching {
+                        contentResolver.registerContentObserver(Uri.parse(file.uri), false, observer)
+                    }.isSuccess
+                    onDispose { if (registered) contentResolver.unregisterContentObserver(observer) }
+                }
+                LaunchedEffect(file, fileChanges) {
+                    if (fileChanges == 0) return@LaunchedEffect
+                    val reloaded = withContext(Dispatchers.IO) { readDocument(Uri.parse(file.uri)) }
+                    // Keeps the last content when the file is briefly unreadable, e.g. while being saved.
+                    if (reloaded.title != "Error") document = reloaded
+                }
+            }
 
             val openFile = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
                 if (uri != null) source = DocumentSource.File(uri.toString())
@@ -51,6 +82,12 @@ class MainActivity : ComponentActivity() {
                 onOpenFile = { openFile.launch(arrayOf("text/markdown", "text/x-markdown", "text/plain", "application/octet-stream")) },
             )
         }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        if (started) fileChanges++
+        started = true
     }
 
     /** What to show for an "Open with" or share intent; null for a plain launch. */

@@ -46,8 +46,8 @@ fun App(
 ) {
     MaterialTheme(colorScheme = if (darkTheme) darkColorScheme() else lightColorScheme()) {
         val segments = remember(document.content) { splitDocument(document.content) }
-        // Index of the diagram or table shown full screen.
-        var expandedIndex by rememberSaveable(document) { mutableStateOf<Int?>(null) }
+        // Index of the diagram or table shown full screen; kept when the same document is reloaded after a change.
+        var expandedIndex by rememberSaveable(document.title) { mutableStateOf<Int?>(null) }
         // Full screen views are drawn over the document so its scroll position and rendered diagrams are kept.
         Box(Modifier.fillMaxSize()) {
             DocumentScreen(document, segments, darkTheme, onOpenFile, onExpand = { expandedIndex = it })
