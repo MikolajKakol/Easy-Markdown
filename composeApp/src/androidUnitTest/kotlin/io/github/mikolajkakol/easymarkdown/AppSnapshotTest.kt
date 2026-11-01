@@ -8,12 +8,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.github.takahirom.roborazzi.captureRoboImage
 import org.junit.Rule
@@ -46,6 +48,18 @@ class AppSnapshotTest {
     @Test
     fun sampleDocumentDark() = snapshot("sample_dark", waitForText = "Text formatting") {
         App(document = SampleDocument, onOpenFile = {}, darkTheme = true)
+    }
+
+    @Test
+    @Config(qualifiers = "w411dp-h891dp-xhdpi")
+    fun find() = snapshot("find", waitForText = "Text formatting") {
+        val search = rememberSearchState()
+        LaunchedEffect(Unit) {
+            search.open()
+            search.field = TextFieldValue("table")
+            search.next()
+        }
+        App(document = SampleDocument, onOpenFile = {}, darkTheme = false, search = search)
     }
 
     @Test

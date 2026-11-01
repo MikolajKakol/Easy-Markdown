@@ -10,8 +10,8 @@ import androidx.compose.ui.unit.sp
 
 /** Code drawn without wrapping in a monospace font, so wrap it in a horizontal scroll. */
 @Composable
-fun CodeBlock(code: DocumentSegment.Code, modifier: Modifier = Modifier) {
-    val text = remember(code.code) { expandTabs(code.code) }
+fun CodeBlock(code: DocumentSegment.Code, modifier: Modifier = Modifier, highlights: List<Highlight> = emptyList()) {
+    val text = remember(code.code, highlights) { highlighted(expandTabs(code.code), 0, highlights) }
     Text(
         text = text,
         softWrap = false,
