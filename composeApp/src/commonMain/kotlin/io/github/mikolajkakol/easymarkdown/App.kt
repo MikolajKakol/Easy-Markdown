@@ -19,6 +19,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -27,13 +29,24 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.path
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
@@ -41,31 +54,82 @@ import androidx.compose.ui.unit.dp
 import com.mikepenz.markdown.m3.Markdown
 import com.mikepenz.markdown.m3.markdownTypography
 
-data class OpenedDocument(val title: String, val content: String)
+/**
+ * A shown document. [location] identifies the file it was read from, so documents opened from links
+ * keep their own scroll position; null for documents that are not files.
+ */
+data class OpenedDocument(val title: String, val content: String, val location: String? = null)
 
+/**
+ * Shows [document].
+ *
+ * Links to other local files go to [onOpenLink], which returns false to open the link with the system instead,
+ * e.g. for a file that is not markdown. Web links always open with the system.
+ * When [onBack] is set, the top bar shows a back button, also bound to the back gesture and Escape key,
+ * returning to the document the shown one was opened from.
+ */
 @Composable
 fun App(
     document: OpenedDocument,
     onOpenFile: (() -> Unit)?,
     darkTheme: Boolean = isSystemInDarkTheme(),
     search: SearchState = rememberSearchState(),
+    onOpenLink: ((LocalLink) -> Boolean)? = null,
+    onBack: (() -> Unit)? = null,
 ) {
     MaterialTheme(colorScheme = if (darkTheme) darkColorScheme() else lightColorScheme()) {
-        val segments = remember(document.content) { splitDocument(document.content) }
-        // Index of the diagram or table shown full screen; kept when the same document is reloaded after a change.
-        var expandedIndex by rememberSaveable(document.title) { mutableStateOf<Int?>(null) }
-        // Full screen views are drawn over the document so its scroll position and rendered diagrams are kept.
-        // Finding is done in the document, so a full screen view is closed when the find bar is opened.
-        LaunchedEffect(search.focusRequests) { if (search.visible) expandedIndex = null }
-        Box(Modifier.fillMaxSize()) {
-            DocumentScreen(document, segments, darkTheme, onOpenFile, search, onExpand = { expandedIndex = it })
-            val close = { expandedIndex = null }
-            when (val expanded = expandedIndex?.let(segments::getOrNull)) {
-                is DocumentSegment.Mermaid -> DiagramScreen(expanded.code, darkTheme, onClose = close)
-                is DocumentSegment.Table -> TableScreen(expanded, onClose = close)
-                is DocumentSegment.Code -> CodeScreen(expanded, onClose = close)
-                else -> Unit
+        PlatformBackHandler(enabled = onBack != null) { onBack?.invoke() }
+        // Each document of the back stack keeps its scroll position and full screen view.
+        val documentStates = rememberSaveableStateHolder()
+        CompositionLocalProvider(LocalUriHandler provides rememberLinkHandler(onOpenLink)) {
+            documentStates.SaveableStateProvider(document.location ?: document.title) {
+                DocumentWithFullScreenViews(document, onOpenFile, darkTheme, search, onBack)
             }
+        }
+    }
+}
+
+/** Opens links to local files with [onOpenLink] and other links with the platform's handler. */
+@Composable
+private fun rememberLinkHandler(onOpenLink: ((LocalLink) -> Boolean)?): UriHandler {
+    val platformHandler = LocalUriHandler.current
+    val currentOnOpenLink by rememberUpdatedState(onOpenLink)
+    return remember(platformHandler) {
+        object : UriHandler {
+            override fun openUri(uri: String) {
+                // Anchors within the document are not supported, and the system cannot open them either.
+                if (uri.trim().startsWith("#")) return
+                val local = parseLocalLink(uri)
+                if (local != null && currentOnOpenLink?.invoke(local) == true) return
+                runCatching { platformHandler.openUri(uri) }
+                    .onFailure { println("Cannot open link $uri: ${it.message}") }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DocumentWithFullScreenViews(
+    document: OpenedDocument,
+    onOpenFile: (() -> Unit)?,
+    darkTheme: Boolean,
+    search: SearchState,
+    onBack: (() -> Unit)?,
+) {
+    val segments = remember(document.content) { splitDocument(document.content) }
+    // Index of the diagram or table shown full screen; kept when the same document is reloaded after a change.
+    var expandedIndex by rememberSaveable(document.title) { mutableStateOf<Int?>(null) }
+    // Full screen views are drawn over the document so its scroll position and rendered diagrams are kept.
+    // Finding is done in the document, so a full screen view is closed when the find bar is opened.
+    LaunchedEffect(search.focusRequests) { if (search.visible) expandedIndex = null }
+    Box(Modifier.fillMaxSize()) {
+        DocumentScreen(document, segments, darkTheme, onOpenFile, search, onBack, onExpand = { expandedIndex = it })
+        val close = { expandedIndex = null }
+        when (val expanded = expandedIndex?.let(segments::getOrNull)) {
+            is DocumentSegment.Mermaid -> DiagramScreen(expanded.code, darkTheme, onClose = close)
+            is DocumentSegment.Table -> TableScreen(expanded, onClose = close)
+            is DocumentSegment.Code -> CodeScreen(expanded, onClose = close)
+            else -> Unit
         }
     }
 }
@@ -78,6 +142,7 @@ private fun DocumentScreen(
     darkTheme: Boolean,
     onOpenFile: (() -> Unit)?,
     search: SearchState,
+    onBack: (() -> Unit)?,
     onExpand: (index: Int) -> Unit,
 ) {
     val documentSearch = remember(segments) { DocumentSearch(segments) }
@@ -102,6 +167,9 @@ private fun DocumentScreen(
             Column {
                 TopAppBar(
                     title = { Text(document.title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                    navigationIcon = {
+                        if (onBack != null) IconButton(onClick = onBack) { Icon(BackArrow, contentDescription = "Back") }
+                    },
                     actions = {
                         TextButton(onClick = search::open) { Text("Find") }
                         if (onOpenFile != null) TextButton(onClick = onOpenFile) { Text("Open") }
@@ -195,4 +263,22 @@ private fun DocumentScreen(
             }
         }
     }
+}
+
+/** Arrow pointing left, drawn here as the app does not depend on the material icons library. */
+private val BackArrow: ImageVector by lazy {
+    ImageVector.Builder(name = "BackArrow", defaultWidth = 24.dp, defaultHeight = 24.dp, viewportWidth = 24f, viewportHeight = 24f)
+        .path(
+            stroke = SolidColor(Color.Black),
+            strokeLineWidth = 2f,
+            strokeLineCap = StrokeCap.Round,
+            strokeLineJoin = StrokeJoin.Round,
+        ) {
+            moveTo(19f, 12f)
+            lineTo(5f, 12f)
+            moveTo(11f, 6f)
+            lineTo(5f, 12f)
+            lineTo(11f, 18f)
+        }
+        .build()
 }
