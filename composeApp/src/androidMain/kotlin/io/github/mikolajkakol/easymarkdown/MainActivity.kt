@@ -7,6 +7,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.provider.DocumentsContract
 import android.provider.OpenableColumns
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -39,6 +40,8 @@ class MainActivity : ComponentActivity() {
         setContent {
             // Only the source (URI or shared text) is saved; file contents are re-read after recreation.
             var source by rememberSaveable { mutableStateOf(launchSource) }
+            // Documents the shown one was opened from with a link, the most recent last.
+            var backStack by rememberSaveable { mutableStateOf(listOf<DocumentSource>()) }
             var document by remember {
                 mutableStateOf(if (source == null) SampleDocument else OpenedDocument("Loading…", ""))
             }
@@ -74,12 +77,30 @@ class MainActivity : ComponentActivity() {
             }
 
             val openFile = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-                if (uri != null) source = DocumentSource.File(uri.toString())
+                if (uri != null) {
+                    source = DocumentSource.File(uri.toString())
+                    backStack = emptyList()
+                }
+            }
+            val openLink = openLink@{ link: LocalLink ->
+                val current = source as? DocumentSource.File ?: return@openLink false
+                if (!link.isMarkdown) return@openLink false
+                val target = resolveLink(Uri.parse(current.uri), link) ?: return@openLink false
+                backStack = backStack + current
+                source = DocumentSource.File(target.toString())
+                true
             }
 
             App(
                 document = document,
                 onOpenFile = { openFile.launch(arrayOf("text/markdown", "text/x-markdown", "text/plain", "application/octet-stream")) },
+                onOpenLink = openLink,
+                onBack = if (backStack.isEmpty()) null else {
+                    {
+                        source = backStack.last()
+                        backStack = backStack.dropLast(1)
+                    }
+                },
             )
         }
     }
@@ -109,9 +130,40 @@ class MainActivity : ComponentActivity() {
     private fun readDocument(uri: Uri): OpenedDocument = try {
         val text = contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
             ?: error("Cannot open $uri")
-        OpenedDocument(title = displayName(uri) ?: "Document", content = text)
+        OpenedDocument(title = displayName(uri) ?: "Document", content = text, location = uri.toString())
     } catch (e: Exception) {
-        OpenedDocument(title = "Error", content = "# Cannot open file\n\n`${e.message}`")
+        OpenedDocument(title = "Error", content = "# Cannot open file\n\n`${e.message}`", location = uri.toString())
+    }
+
+    /**
+     * The URI of the file [link] points to, relative to the document at [base]. Storage Access Framework
+     * documents name their folder in the document ID, e.g. `primary:Notes/a.md`; reading a sibling found
+     * that way can still fail when the app was only granted access to the opened file.
+     */
+    private fun resolveLink(base: Uri, link: LocalLink): Uri? {
+        if (base.scheme == "file") {
+            val directory = base.path?.substringBeforeLast('/', "") ?: return null
+            return Uri.fromFile(java.io.File(resolvePath(directory, link)))
+        }
+        if (base.scheme != "content") return null
+        if (DocumentsContract.isDocumentUri(this, base)) {
+            val id = DocumentsContract.getDocumentId(base)
+            // The ID's root, like `primary:` or `raw:`, and the path within it.
+            val root = if (':' in id) id.substringBefore(':') + ":" else ""
+            val path = id.removePrefix(root)
+            if (root.isEmpty() && '/' !in path) return null
+            val directory = "/" + path.removePrefix("/").substringBeforeLast('/', "")
+            val newPath = resolvePath(directory, link).let { if (path.startsWith("/")) it else it.removePrefix("/") }
+            return if (DocumentsContract.isTreeUri(base)) {
+                DocumentsContract.buildDocumentUriUsingTree(base, root + newPath)
+            } else {
+                DocumentsContract.buildDocumentUri(base.authority, root + newPath)
+            }
+        }
+        // Providers with plain paths, like `content://provider/files/notes/a.md`.
+        val segments = base.pathSegments.dropLast(1)
+        val resolved = resolvePath("/" + segments.joinToString("/"), link)
+        return base.buildUpon().path(resolved).build()
     }
 
     private fun displayName(uri: Uri): String? = runCatching {

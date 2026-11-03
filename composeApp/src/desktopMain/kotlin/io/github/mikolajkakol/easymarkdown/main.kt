@@ -34,7 +34,6 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.withContext
 
 private val isMac = System.getProperty("os.name").startsWith("Mac")
-private val markdownExtensions = setOf("md", "markdown", "mdown", "mkd", "txt")
 
 fun main(args: Array<String>) {
     val documents = OpenDocuments()
@@ -90,8 +89,26 @@ private class DocumentWindowState(file: File?) {
     /** Incremented to read the file again and bring its window to the front. */
     var reloads by mutableIntStateOf(0)
 
+    /** Files the shown one was opened from with a link, the most recent last. */
+    val backStack = mutableStateListOf<File>()
+
     fun reload() {
         reloads++
+    }
+
+    /** Shows the markdown file [link] points to in this window; returns false for other links. */
+    fun openLink(link: LocalLink): Boolean {
+        val current = file ?: return false
+        if (!link.isMarkdown) return false
+        val target = File(resolvePath(current.absoluteFile.parentFile.invariantSeparatorsPath, link))
+        if (target == current) return true
+        backStack += current
+        file = target
+        return true
+    }
+
+    fun back() {
+        backStack.removeLastOrNull()?.let { file = it }
     }
 }
 
@@ -124,12 +141,15 @@ private fun DocumentWindow(state: DocumentWindowState, documents: OpenDocuments)
             }
         }
         val openFile: () -> Unit = { chooseMarkdownFile(window)?.let(documents::open) }
+        val canGoBack = state.backStack.isNotEmpty()
 
         MenuBar {
             Menu("File") {
                 Item("Open…", shortcut = shortcut(Key.O), onClick = openFile)
                 Item("Reload", enabled = state.file != null, shortcut = shortcut(Key.R), onClick = state::reload)
                 Item("Close Window", shortcut = shortcut(Key.W), onClick = { documents.close(state) })
+                Separator()
+                Item("Back", enabled = canGoBack, shortcut = shortcut(Key.LeftBracket), onClick = state::back)
                 if (DefaultMarkdownApp.isSupported) {
                     Separator()
                     Item("Make Default App for Markdown Files") {
@@ -150,7 +170,13 @@ private fun DocumentWindow(state: DocumentWindowState, documents: OpenDocuments)
         }
 
         CompositionLocalProvider(LocalBackHandlers provides backHandlers) {
-            App(document = document, onOpenFile = openFile, search = search)
+            App(
+                document = document,
+                onOpenFile = openFile,
+                search = search,
+                onOpenLink = { link -> state.openLink(link) || openWithSystem(state.file, link) },
+                onBack = if (canGoBack) state::back else null,
+            )
         }
     }
 }
@@ -158,9 +184,18 @@ private fun DocumentWindow(state: DocumentWindowState, documents: OpenDocuments)
 private fun shortcut(key: Key, shift: Boolean = false) = KeyShortcut(key, meta = isMac, ctrl = !isMac, shift = shift)
 
 private fun readDocument(file: File): OpenedDocument = try {
-    OpenedDocument(title = file.name, content = file.readText())
+    OpenedDocument(title = file.name, content = file.readText(), location = file.path)
 } catch (e: Exception) {
-    OpenedDocument(title = "Error", content = "# Cannot open file\n\n`${e.message}`")
+    OpenedDocument(title = "Error", content = "# Cannot open file\n\n`${e.message}`", location = file.path)
+}
+
+/** Opens a linked file that is not markdown, e.g. an image or PDF, in its default app. */
+private fun openWithSystem(document: File?, link: LocalLink): Boolean {
+    val base = document?.absoluteFile?.parentFile ?: return false
+    val target = File(resolvePath(base.invariantSeparatorsPath, link))
+    if (!target.exists() || !Desktop.isDesktopSupported() || !Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) return false
+    thread(isDaemon = true) { runCatching { Desktop.getDesktop().open(target) } }
+    return true
 }
 
 private fun chooseMarkdownFile(parent: Frame): File? {

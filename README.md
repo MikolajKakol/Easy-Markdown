@@ -27,6 +27,11 @@ Przeglądarka plików **Markdown** z obsługą diagramów **Mermaid**, napisana 
 - tapnięcie diagramu otwiera go na pełnym ekranie z pinch-to-zoom i przesuwaniem,
 - wyszukiwanie w dokumencie (**Find**, na Macu ⌘F): podświetla wszystkie wyniki i przewija do bieżącego;
   szuka w tekście tak, jak jest wyświetlany (bez znaczników Markdown), w tabelach, blokach kodu i kodzie diagramów,
+- kliknięcie linku do innego pliku Markdown (np. `[Instrukcja](docs/guide.md)`, ścieżka względna do bieżącego
+  pliku) otwiera go w tym samym oknie, odkładając poprzedni dokument na stos; strzałka wstecz w górnym pasku
+  (oraz gest wstecz na Androidzie, Esc lub ⌘[ na Macu) wraca do poprzedniego dokumentu z zachowaną pozycją
+  przewijania. Linki internetowe otwierają się w przeglądarce. Na Androidzie plik z linku musi być dostępny
+  dla aplikacji – przy plikach wybranych przez systemowy wybór pliku dostęp do sąsiednich plików nie zawsze jest nadany,
 - otwieranie plików przez systemowy wybór pliku (**Open**), „Otwórz za pomocą” oraz
   **Udostępnij**; aplikacja rejestruje się jako obsługująca pliki `.md`, `.markdown`, `.mdown`, `.mkd`
   (także gdy menedżer plików podaje ogólny typ MIME), więc można ją ustawić jako domyślną. Przyjmuje udostępniane pliki `.md`/tekstowe oraz sam tekst (renderowany jako Markdown),
