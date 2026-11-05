@@ -12,11 +12,13 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -37,6 +39,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -189,75 +192,83 @@ private fun DocumentScreen(
                 h6 = titleSmall,
             )
         }
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .verticalScroll(scrollState)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            segments.forEachIndexed { index, segment ->
-                val segmentMatches = matchesBySegment[index].orEmpty()
-                val placed = Modifier.onPlaced { segmentBounds[index] = it.positionInParent().y to it.size.height }
-                when (segment) {
-                    is DocumentSegment.Markdown -> Markdown(
-                        content = segment.text,
-                        typography = typography,
-                        annotator = remember(segmentMatches, current) {
-                            searchAnnotator(segmentMatches.map { Highlight(it.range, it == current) })
-                        },
-                        modifier = placed.fillMaxWidth(),
-                    )
-                    is DocumentSegment.Mermaid -> Box(
-                        placed
-                            .fillMaxWidth()
-                            .then(
-                                // The diagram is an image, so one whose code matches gets a frame.
-                                if (segmentMatches.isEmpty()) Modifier else Modifier.border(
-                                    width = if (current in segmentMatches) 3.dp else 2.dp,
-                                    color = highlightStyle(current in segmentMatches).background,
-                                    shape = RoundedCornerShape(8.dp),
+        // The whole document is one selection, so text can be selected across paragraphs, tables and code.
+        SelectionContainer(Modifier.fillMaxSize().padding(padding)) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(scrollState)
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                segments.forEachIndexed { index, segment ->
+                    val segmentMatches = matchesBySegment[index].orEmpty()
+                    val placed = Modifier.onPlaced { segmentBounds[index] = it.positionInParent().y to it.size.height }
+                    when (segment) {
+                        is DocumentSegment.Markdown -> Markdown(
+                            content = segment.text,
+                            typography = typography,
+                            annotator = remember(segmentMatches, current) {
+                                searchAnnotator(segmentMatches.map { Highlight(it.range, it == current) })
+                            },
+                            modifier = placed.fillMaxWidth(),
+                        )
+                        is DocumentSegment.Mermaid -> Box(
+                            placed
+                                .fillMaxWidth()
+                                .then(
+                                    // The diagram is an image, so one whose code matches gets a frame.
+                                    if (segmentMatches.isEmpty()) Modifier else Modifier.border(
+                                        width = if (current in segmentMatches) 3.dp else 2.dp,
+                                        color = highlightStyle(current in segmentMatches).background,
+                                        shape = RoundedCornerShape(8.dp),
+                                    ),
                                 ),
-                            ),
-                    ) {
-                        LocalMermaidRenderer.current.Render(
-                            code = segment.code,
-                            darkTheme = darkTheme,
-                            zoomable = false,
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                        // Covers the diagram so taps open the full screen view instead of reaching the WebView.
-                        Box(
-                            Modifier
-                                .matchParentSize()
-                                .semantics { contentDescription = "Mermaid diagram" }
-                                .clickable(onClickLabel = "Open diagram") { onExpand(index) },
-                        )
-                    }
-                    is DocumentSegment.Code -> Box(
-                        placed
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(MaterialTheme.colorScheme.surfaceVariant)
-                            .semantics { contentDescription = "Code block" }
-                            .clickable(onClickLabel = "Open code") { onExpand(index) },
-                    ) {
-                        CodeBlock(
-                            segment,
-                            Modifier.horizontalScroll(rememberScrollState()).padding(12.dp),
-                            highlights = segmentMatches.map { Highlight(it.range, it == current) },
-                        )
-                    }
-                    is DocumentSegment.Table -> Box(placed.fillMaxWidth().horizontalScroll(rememberScrollState())) {
-                        MarkdownTable(
-                            table = segment,
-                            maxColumnWidth = 260.dp,
-                            highlights = segmentMatches.groupBy { it.cell!! }.mapValues { (_, hits) -> current in hits },
-                            modifier = Modifier
-                                .semantics { contentDescription = "Markdown table" }
-                                .clickable(onClickLabel = "Open table") { onExpand(index) },
-                        )
+                        ) {
+                            LocalMermaidRenderer.current.Render(
+                                code = segment.code,
+                                darkTheme = darkTheme,
+                                zoomable = false,
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                            // Covers the diagram so taps open the full screen view instead of reaching the WebView.
+                            Box(
+                                Modifier
+                                    .matchParentSize()
+                                    .semantics { contentDescription = "Mermaid diagram" }
+                                    .clickable(onClickLabel = "Open diagram") { onExpand(index) },
+                            )
+                            CopyButton({ segment.code }, "Copy diagram source", Modifier.align(Alignment.TopEnd).padding(4.dp))
+                        }
+                        is DocumentSegment.Code -> Box(
+                            placed
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant)
+                                .semantics { contentDescription = "Code block" }
+                                .clickable(onClickLabel = "Open code") { onExpand(index) },
+                        ) {
+                            CodeBlock(
+                                segment,
+                                Modifier.horizontalScroll(rememberScrollState()).padding(12.dp),
+                                highlights = segmentMatches.map { Highlight(it.range, it == current) },
+                            )
+                            CopyButton({ segment.code }, "Copy code", Modifier.align(Alignment.TopEnd).padding(4.dp))
+                        }
+                        // The copy button sits beside the table rather than over its header cells.
+                        is DocumentSegment.Table -> Row(placed) {
+                            Box(Modifier.weight(1f, fill = false).horizontalScroll(rememberScrollState())) {
+                                MarkdownTable(
+                                    table = segment,
+                                    maxColumnWidth = 260.dp,
+                                    highlights = segmentMatches.groupBy { it.cell!! }.mapValues { (_, hits) -> current in hits },
+                                    modifier = Modifier
+                                        .semantics { contentDescription = "Markdown table" }
+                                        .clickable(onClickLabel = "Open table") { onExpand(index) },
+                                )
+                            }
+                            CopyButton({ tableAsText(segment) }, "Copy table", Modifier.padding(start = 4.dp))
+                        }
                     }
                 }
             }

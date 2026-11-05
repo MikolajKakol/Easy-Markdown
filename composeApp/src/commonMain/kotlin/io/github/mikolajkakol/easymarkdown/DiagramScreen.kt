@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
@@ -19,7 +20,7 @@ import androidx.compose.ui.unit.dp
 /** Full screen view of a single diagram with pinch-to-zoom. */
 @Composable
 fun DiagramScreen(code: String, darkTheme: Boolean, onClose: () -> Unit, modifier: Modifier = Modifier) {
-    DetailScreen(title = "Diagram", onClose = onClose, modifier = modifier) { padding ->
+    DetailScreen(title = "Diagram", copyText = { code }, onClose = onClose, modifier = modifier) { padding ->
         LocalMermaidRenderer.current.Render(
             code = code,
             darkTheme = darkTheme,
@@ -32,7 +33,7 @@ fun DiagramScreen(code: String, darkTheme: Boolean, onClose: () -> Unit, modifie
 /** Full screen view of a table, scrollable in both directions, with wider columns than inline. */
 @Composable
 fun TableScreen(table: DocumentSegment.Table, onClose: () -> Unit, modifier: Modifier = Modifier) {
-    DetailScreen(title = "Table", onClose = onClose, modifier = modifier) { padding ->
+    DetailScreen(title = "Table", copyText = { tableAsText(table) }, onClose = onClose, modifier = modifier) { padding ->
         Box(
             Modifier
                 .fillMaxSize()
@@ -41,7 +42,7 @@ fun TableScreen(table: DocumentSegment.Table, onClose: () -> Unit, modifier: Mod
                 .horizontalScroll(rememberScrollState())
                 .padding(16.dp),
         ) {
-            MarkdownTable(table, maxColumnWidth = 360.dp)
+            SelectionContainer { MarkdownTable(table, maxColumnWidth = 360.dp) }
         }
     }
 }
@@ -49,7 +50,12 @@ fun TableScreen(table: DocumentSegment.Table, onClose: () -> Unit, modifier: Mod
 /** Full screen view of a code block, scrollable in both directions. */
 @Composable
 fun CodeScreen(code: DocumentSegment.Code, onClose: () -> Unit, modifier: Modifier = Modifier) {
-    DetailScreen(title = code.language.ifEmpty { "Code" }, onClose = onClose, modifier = modifier) { padding ->
+    DetailScreen(
+        title = code.language.ifEmpty { "Code" },
+        copyText = { code.code },
+        onClose = onClose,
+        modifier = modifier,
+    ) { padding ->
         Box(
             Modifier
                 .fillMaxSize()
@@ -58,7 +64,7 @@ fun CodeScreen(code: DocumentSegment.Code, onClose: () -> Unit, modifier: Modifi
                 .horizontalScroll(rememberScrollState())
                 .padding(16.dp),
         ) {
-            CodeBlock(code)
+            SelectionContainer { CodeBlock(code) }
         }
     }
 }
@@ -67,6 +73,7 @@ fun CodeScreen(code: DocumentSegment.Code, onClose: () -> Unit, modifier: Modifi
 @Composable
 private fun DetailScreen(
     title: String,
+    copyText: () -> String,
     onClose: () -> Unit,
     modifier: Modifier,
     content: @Composable (PaddingValues) -> Unit,
@@ -77,7 +84,10 @@ private fun DetailScreen(
         topBar = {
             TopAppBar(
                 title = { Text(title) },
-                actions = { TextButton(onClick = onClose) { Text("Close") } },
+                actions = {
+                    CopyButton(copyText, "Copy")
+                    TextButton(onClick = onClose) { Text("Close") }
+                },
             )
         },
         content = content,
