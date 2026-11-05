@@ -1,9 +1,11 @@
 package io.github.mikolajkakol.easymarkdown
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.ImageComposeScene
 import androidx.compose.ui.graphics.toPixelMap
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.Density
 import java.io.File
 import kotlin.test.Test
@@ -36,6 +38,15 @@ class DesktopRenderingTest {
         screenshot("app_light", height = 3000) { App(SampleDocument, onOpenFile = {}, darkTheme = false) }
         screenshot("app_dark", height = 3000) { App(SampleDocument, onOpenFile = {}, darkTheme = true) }
         val flowchart = splitDocument(SampleDocument.content).filterIsInstance<DocumentSegment.Mermaid>().first()
+        screenshot("find", height = 1200) {
+            val search = rememberSearchState()
+            LaunchedEffect(Unit) {
+                search.open()
+                search.input = TextFieldValue("table")
+                search.next()
+            }
+            App(SampleDocument, onOpenFile = {}, darkTheme = false, search = search)
+        }
         screenshot("diagram_full_screen", height = 700) { DiagramScreen(flowchart.code, darkTheme = false, onClose = {}) }
     }
 
